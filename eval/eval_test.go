@@ -114,6 +114,22 @@ func TestIdentifier(t *testing.T) {
 	}
 }
 
+func TestBlockExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"{ var a = 5; a; }", 5},
+		{"var a = 1; { a = 5; }; a", 5},
+		{"var a = 1; { var a = 5; }; a", 1},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
 func testIntegerObject(t *testing.T, evaluated object.Object, expected int64) {
 	result, ok := evaluated.(*object.Integer)
 	if !ok {

@@ -127,6 +127,45 @@ func TestAssignExpression(t *testing.T) {
 	}
 }
 
+func TestBlockExpression(t *testing.T) {
+	input := `
+{
+	var x = 5;
+	var y = 10;
+	var foobar = 838383;
+}
+	`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	exprStmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.BlockExpression. got=%T", program.Statements[0])
+	}
+
+	block, ok := exprStmt.Expression.(*ast.BlockExpression)
+	if !ok {
+		t.Fatalf("block is not *ast.BlockExpression. got=%T", exprStmt.Expression)
+	}
+
+	tests := []string{"x", "y", "foobar"}
+
+	for i, tt := range tests {
+		stmt := block.Statements[i]
+		if !testVarStatement(t, stmt, tt) {
+			return
+		}
+	}
+}
+
 func testInfixExpression(t *testing.T, exp *ast.InfixExpression, left interface{}, operator string, right interface{}) bool {
 	if !testLiteralExpression(t, exp.Left, left) {
 		return false

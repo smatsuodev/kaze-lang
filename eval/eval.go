@@ -22,7 +22,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return value
 		}
 
-		env.Set(node.Name.Value, value)
+		env.Create(node.Name.Value, value)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
 	case *ast.PrefixExpression:
@@ -42,14 +42,16 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.AssignExpression:
-		if _, ok := env.Get(node.Name.Value); !ok {
-			return newError("undefined variable: %s", node.Name.Value)
-		}
 		value := Eval(node.Value, env)
 		if isError(value) {
 			return value
 		}
-		env.Set(node.Name.Value, value)
+		if _, ok := env.Update(node.Name.Value, value); !ok {
+			return newError("variable not found: %s", node.Name.Value)
+		}
+		return value
+	case *ast.BlockExpression:
+		return evalStatements(node.Statements, object.NewEnclosedEnvironment(env))
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:

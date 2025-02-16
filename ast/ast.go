@@ -128,3 +128,20 @@ func (ae *AssignExpression) TokenLiteral() string { return ae.Token.Literal }
 func (ae *AssignExpression) String() string {
 	return ae.Name.String() + " = " + ae.Value.String()
 }
+
+type BlockExpression struct {
+	Token      token.Token
+	Statements []Statement
+}
+
+func (bs *BlockExpression) expressionNode()      {}
+func (bs *BlockExpression) TokenLiteral() string { return bs.Token.Literal }
+func (bs *BlockExpression) String() string {
+	var out string
+
+	for _, s := range bs.Statements {
+		out += s.String()
+	}
+
+	return out
+}
