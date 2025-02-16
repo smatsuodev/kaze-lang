@@ -130,6 +130,24 @@ func TestBlockExpression(t *testing.T) {
 	}
 }
 
+func TestReturnStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"return 10;", 10},
+		{"return 10; 9;", 10},
+		{"return 2 * 5; 9;", 10},
+		{"var a = 5; return a;", 5},
+		{"var a = 5; return a; return 10;", 5},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
 func testIntegerObject(t *testing.T, evaluated object.Object, expected int64) {
 	result, ok := evaluated.(*object.Integer)
 	if !ok {

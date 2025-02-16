@@ -23,6 +23,12 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		env.Create(node.Name.Value, value)
+	case *ast.ReturnStatement:
+		val := Eval(node.ReturnValue, env)
+		if isError(val) {
+			return val
+		}
+		return &object.ReturnValue{Value: val}
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
 	case *ast.PrefixExpression:
@@ -78,6 +84,9 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) object.Objec
 		result = Eval(statement, env)
 		if isError(result) {
 			return result
+		}
+		if returnValue, ok := result.(*object.ReturnValue); ok {
+			return returnValue.Value
 		}
 	}
 

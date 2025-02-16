@@ -51,6 +51,17 @@ func (vs *VarStatement) String() string {
 	return vs.TokenLiteral() + " " + vs.Name.String() + " = " + vs.Value.String() + ";"
 }
 
+type ReturnStatement struct {
+	Token       token.Token
+	ReturnValue Expression
+}
+
+func (rs *ReturnStatement) statementNode()       {}
+func (rs *ReturnStatement) TokenLiteral() string { return rs.Token.Literal }
+func (rs *ReturnStatement) String() string {
+	return rs.TokenLiteral() + " " + rs.ReturnValue.String() + ";"
+}
+
 type ExpressionStatement struct {
 	Token      token.Token
 	Expression Expression
