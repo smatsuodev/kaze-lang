@@ -20,9 +20,9 @@ func (l *Lexer) readChar() {
 		l.ch = 0
 	} else {
 		l.ch = l.input[l.nextPos]
-		l.pos = l.nextPos
-		l.nextPos++
 	}
+	l.pos = l.nextPos
+	l.nextPos++
 }
 
 func (l *Lexer) NextToken() token.Token {

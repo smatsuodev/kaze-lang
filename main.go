@@ -1,5 +1,10 @@
 package main
 
+import (
+	"kaze/repl"
+	"os"
+)
+
 func main() {
-	println("Hello, world!")
+	repl.Start(os.Stdin, os.Stdout)
 }
