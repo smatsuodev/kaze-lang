@@ -85,6 +85,48 @@ func TestInfixExpressions(t *testing.T) {
 	}
 }
 
+func TestAssignExpression(t *testing.T) {
+	tests := []struct {
+		input string
+		name  interface{}
+		value interface{}
+	}{
+		{"x = 5;", "x", 5},
+		{"y = true;", "y", true},
+		{"foobar = y;", "foobar", "y"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
+		exp, ok := stmt.Expression.(*ast.AssignExpression)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.AssignExpression. got=%T", stmt.Expression)
+		}
+
+		if exp.Name.Value != tt.name {
+			t.Fatalf("exp.Name.Value not '%s'. got=%s", tt.name, exp.Name.Value)
+		}
+
+		if !testLiteralExpression(t, exp.Value, tt.value) {
+			return
+		}
+	}
+}
+
 func testInfixExpression(t *testing.T, exp *ast.InfixExpression, left interface{}, operator string, right interface{}) bool {
 	if !testLiteralExpression(t, exp.Left, left) {
 		return false

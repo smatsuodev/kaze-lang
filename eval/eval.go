@@ -41,6 +41,15 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return right
 		}
 		return evalInfixExpression(node.Operator, left, right)
+	case *ast.AssignExpression:
+		if _, ok := env.Get(node.Name.Value); !ok {
+			return newError("undefined variable: %s", node.Name.Value)
+		}
+		value := Eval(node.Value, env)
+		if isError(value) {
+			return value
+		}
+		env.Set(node.Name.Value, value)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:

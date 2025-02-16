@@ -14,13 +14,13 @@ type infixParseFn func(ast.Expression) ast.Expression
 const (
 	_ int = iota
 	LOWEST
+	ASSIGN      // =
 	EQUALS      // ==
 	LESSGREATER // > or <
 	SUM         // +
 	PRODUCT     // *
 	PREFIX      // -X or !X
 	CALL        // myFunction(X)
-	ASSIGN      // =
 )
 
 var precedences = map[token.TokenType]int{
@@ -66,6 +66,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.ASSIGN, p.parseAssignExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -239,6 +240,23 @@ func (p *Parser) parseInfixExpression(expression ast.Expression) ast.Expression 
 	precedence := p.curPrecedence()
 	p.nextToken()
 	exp.Right = p.parseExpression(precedence)
+	return exp
+}
+
+func (p *Parser) parseAssignExpression(expression ast.Expression) ast.Expression {
+	ident, ok := expression.(*ast.Identifier)
+	if !ok {
+		msg := fmt.Sprintf("expected identifier on left side of =, got %T", expression)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	exp := &ast.AssignExpression{
+		Token: p.curToken,
+		Name:  ident,
+	}
+	precedence := p.curPrecedence()
+	p.nextToken()
+	exp.Value = p.parseExpression(precedence)
 	return exp
 }
 

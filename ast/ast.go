@@ -116,3 +116,15 @@ func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *InfixExpression) String() string {
 	return "(" + ie.Left.String() + " " + ie.Operator + " " + ie.Right.String() + ")"
 }
+
+type AssignExpression struct {
+	Token token.Token
+	Name  *Identifier
+	Value Expression
+}
+
+func (ae *AssignExpression) expressionNode()      {}
+func (ae *AssignExpression) TokenLiteral() string { return ae.Token.Literal }
+func (ae *AssignExpression) String() string {
+	return ae.Name.String() + " = " + ae.Value.String()
+}

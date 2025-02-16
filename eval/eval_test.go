@@ -105,6 +105,7 @@ func TestIdentifier(t *testing.T) {
 		{"var a = 5; a;", 5},
 		{"var a = 5; var b = a; b;", 5},
 		{"var a = 5; var b = a; var c = a + b + 5; c;", 15},
+		{"var a = 5; a = 10; a;", 10},
 	}
 
 	for _, tt := range tests {
