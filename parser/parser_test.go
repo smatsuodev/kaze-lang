@@ -41,6 +41,67 @@ func TestVarStatements(t *testing.T) {
 	}
 }
 
+func TestInfixExpressions(t *testing.T) {
+	tests := []struct {
+		input      string
+		leftValue  interface{}
+		operator   string
+		rightValue interface{}
+	}{
+		{"5 + 5;", 5, "+", 5},
+		{"5 - 5;", 5, "-", 5},
+		{"5 * 5;", 5, "*", 5},
+		{"5 / 5;", 5, "/", 5},
+		{"5 > 5;", 5, ">", 5},
+		{"5 < 5;", 5, "<", 5},
+		{"5 == 5;", 5, "==", 5},
+		{"5 != 5;", 5, "!=", 5},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
+		exp, ok := stmt.Expression.(*ast.InfixExpression)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.InfixExpression. got=%T", stmt.Expression)
+		}
+
+		if !testInfixExpression(t, exp, tt.leftValue, tt.operator, tt.rightValue) {
+			return
+		}
+	}
+}
+
+func testInfixExpression(t *testing.T, exp *ast.InfixExpression, left interface{}, operator string, right interface{}) bool {
+	if !testLiteralExpression(t, exp.Left, left) {
+		return false
+	}
+
+	if exp.Operator != operator {
+		t.Errorf("exp.Operator is not '%s'. got=%q", operator, exp.Operator)
+		return false
+	}
+
+	if !testLiteralExpression(t, exp.Right, right) {
+		return false
+	}
+
+	return true
+}
+
 func testVarStatement(t *testing.T, stmt ast.Statement, s string) bool {
 	if stmt.TokenLiteral() != "var" {
 		t.Errorf("stmt.TokenLiteral not 'var'. got=%q", stmt.TokenLiteral())
