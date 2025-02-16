@@ -7,7 +7,21 @@ import (
 
 func TestNextToken(t *testing.T) {
 	input := `1 + 2 - 3 * 4 / 5 * (6 + 7) - 8;
-1234567890;`
+1234567890;
+var hoge = 1;
+fun fuga(x) {
+    if (true) {
+		return x;
+	} else if (false) {
+		return x + 1;
+	}
+}
+1 == 1;
+1 != 1;
+1 < 1;
+1 > 1;
+!true;
+`
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
@@ -31,6 +45,58 @@ func TestNextToken(t *testing.T) {
 		{token.INT, "8"},
 		{token.SEMICOLON, ";"},
 		{token.INT, "1234567890"},
+		{token.SEMICOLON, ";"},
+		{token.VAR, "var"},
+		{token.IDENT, "hoge"},
+		{token.ASSIGN, "="},
+		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+		{token.FUN, "fun"},
+		{token.IDENT, "fuga"},
+		{token.LPAREN, "("},
+		{token.IDENT, "x"},
+		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+		{token.IF, "if"},
+		{token.LPAREN, "("},
+		{token.TRUE, "true"},
+		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+		{token.RETURN, "return"},
+		{token.IDENT, "x"},
+		{token.SEMICOLON, ";"},
+		{token.RBRACE, "}"},
+		{token.ELSE, "else"},
+		{token.IF, "if"},
+		{token.LPAREN, "("},
+		{token.FALSE, "false"},
+		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+		{token.RETURN, "return"},
+		{token.IDENT, "x"},
+		{token.PLUS, "+"},
+		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+		{token.RBRACE, "}"},
+		{token.RBRACE, "}"},
+		{token.INT, "1"},
+		{token.EQ, "=="},
+		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+		{token.INT, "1"},
+		{token.NOT_EQ, "!="},
+		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+		{token.INT, "1"},
+		{token.LT, "<"},
+		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+		{token.INT, "1"},
+		{token.GT, ">"},
+		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+		{token.BANG, "!"},
+		{token.TRUE, "true"},
 		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}

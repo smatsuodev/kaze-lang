@@ -30,6 +30,13 @@ func (l *Lexer) NextToken() token.Token {
 
 	l.skipWhitespace()
 	switch l.ch {
+	case '=':
+		if l.peekChar() == '=' {
+			tok = token.Token{Type: token.EQ, Literal: "=="}
+			l.readChar()
+		} else {
+			tok = newToken(token.ASSIGN, l.ch)
+		}
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
 	case '-':
@@ -38,27 +45,53 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.ASTERISK, l.ch)
 	case '/':
 		tok = newToken(token.SLASH, l.ch)
+	case '!':
+		if l.peekChar() == '=' {
+			tok = token.Token{Type: token.NOT_EQ, Literal: "!="}
+			l.readChar()
+		} else {
+			tok = newToken(token.BANG, l.ch)
+		}
+	case '<':
+		tok = newToken(token.LT, l.ch)
+	case '>':
+		tok = newToken(token.GT, l.ch)
 	case '(':
 		tok = newToken(token.LPAREN, l.ch)
 	case ')':
 		tok = newToken(token.RPAREN, l.ch)
+	case '{':
+		tok = newToken(token.LBRACE, l.ch)
+	case '}':
+		tok = newToken(token.RBRACE, l.ch)
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case 0:
 		tok.Type = token.EOF
 		tok.Literal = ""
 	default:
+		if isLetter(l.ch) {
+			tok.Literal = l.readIdentifier()
+			tok.Type = token.LookupIdent(tok.Literal)
+			return tok
+		}
 		if isDigit(l.ch) {
 			tok.Type = token.INT
 			tok.Literal = l.readInteger()
 			return tok
-		} else {
-			tok = newToken(token.UNKNOWN, l.ch)
 		}
+		tok = newToken(token.UNKNOWN, l.ch)
 	}
 
 	l.readChar()
 	return tok
+}
+
+func (l *Lexer) peekChar() byte {
+	if l.nextPos >= len(l.input) {
+		return 0
+	}
+	return l.input[l.nextPos]
 }
 
 func (l *Lexer) skipWhitespace() {
@@ -73,6 +106,18 @@ func (l *Lexer) readInteger() string {
 		l.readChar()
 	}
 	return l.input[pos:l.pos]
+}
+
+func (l *Lexer) readIdentifier() string {
+	pos := l.pos
+	for isLetter(l.ch) || isDigit(l.ch) {
+		l.readChar()
+	}
+	return l.input[pos:l.pos]
+}
+
+func isLetter(ch byte) bool {
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
 }
 
 func isDigit(ch byte) bool {
