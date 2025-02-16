@@ -11,8 +11,9 @@ func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
+	env := object.NewEnvironment()
 
-	return Eval(program)
+	return Eval(program, env)
 }
 
 func TestEvalIntegerExpression(t *testing.T) {
@@ -93,6 +94,22 @@ func TestBangOperator(t *testing.T) {
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		testBooleanObject(t, evaluated, tt.expected)
+	}
+}
+
+func TestIdentifier(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"var a = 5; a;", 5},
+		{"var a = 5; var b = a; b;", 5},
+		{"var a = 5; var b = a; var c = a + b + 5; c;", 15},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
 
