@@ -14,6 +14,7 @@ func TestVarStatements(t *testing.T) {
 		expectedValue      interface{}
 	}{
 		{"var x = 5;", "x", 5},
+		{"var y = true;", "y", true},
 		{"var foobar = y;", "foobar", "y"},
 	}
 
@@ -73,6 +74,8 @@ func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{
 		return testIntegerLiteral(t, exp, v)
 	case string:
 		return testIdentifier(t, exp, v)
+	case bool:
+		return testBoolean(t, exp, v)
 	}
 	t.Errorf("type of exp not handled. got=%T", exp)
 	return false
@@ -112,6 +115,26 @@ func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
 
 	if ident.TokenLiteral() != value {
 		t.Errorf("ident.TokenLiteral not %s. got=%s", value, ident.TokenLiteral())
+		return false
+	}
+
+	return true
+}
+
+func testBoolean(t *testing.T, exp ast.Expression, value bool) bool {
+	b, ok := exp.(*ast.Boolean)
+	if !ok {
+		t.Errorf("exp not *ast.Boolean. got=%T", exp)
+		return false
+	}
+
+	if b.Value != value {
+		t.Errorf("bool.Value not %t. got=%t", value, b.Value)
+		return false
+	}
+
+	if b.TokenLiteral() != strconv.FormatBool(value) {
+		t.Errorf("bool.TokenLiteral not %t. got=%s", value, b.TokenLiteral())
 		return false
 	}
 
