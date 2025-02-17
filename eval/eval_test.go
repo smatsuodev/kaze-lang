@@ -158,11 +158,49 @@ func TestFunctions(t *testing.T) {
 		{"fun sum(x, y) { x + y; } sum(5, 10);", 15},
 		{"fun sum(x, y) { x + y; } sum(5 + 5, 10 + 10);", 30},
 		{"fun sum(x, y) { var a = x + y; a; } sum(5, 10);", 15},
+		{"fun fact(x) { if (x == 0) { return 1; } else { return x * fact(x - 1); } } fact(5);", 120},
+		{"var x = 10; fun f(x) { return x; } f(5);", 5},
+		{"var x = 10; fun f(x) { return x; } f(x);", 10},
+		{"var x = 10; fun f(x) { x = 5; } x;", 10},
+		{"var x = 10; fun f() { return x; } f();", 10},
+		{"var x = 10; fun f() { x = 5; } x;", 10},
+		{"var x = 10; fun f() { x = 5; return x; } f(); x;", 5},
 	}
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
+func TestIfExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"if true { 10; }", 10},
+		{"if false { 10; }", NULL},
+		{"if 1 { 10; }", 10},
+		{"if 1 < 2 { 10; }", 10},
+		{"if 1 > 2 { 10; }", NULL},
+		{"if 1 > 2 { 10; } else { 20; }", 20},
+		{"if 1 < 2 { 10; } else { 20; }", 10},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch v := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(v))
+		case int64:
+			testIntegerObject(t, evaluated, v)
+		case bool:
+			testBooleanObject(t, evaluated, v)
+		case object.Object:
+			if evaluated != v {
+				t.Fatalf("object has wrong value. got=%+v, want=%+v", evaluated, v)
+			}
+		}
 	}
 }
 

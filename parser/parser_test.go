@@ -403,3 +403,45 @@ func TestCallExpression(t *testing.T) {
 		}
 	}
 }
+
+func TestIfExpressions(t *testing.T) {
+	tests := []struct {
+		input       string
+		condition   string
+		consequence string
+		alternative string
+	}{
+		{"if x < y { x }", "(x < y)", "x", ""},
+		{"if x < y { x } else { y }", "(x < y)", "x", "y"},
+		{"if (x < y) { x }", "(x < y)", "x", ""},
+		{"if (x < y) { x } else { y }", "(x < y)", "x", "y"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		stmt := program.Statements[0].(*ast.ExpressionStatement)
+		ifExp, ok := stmt.Expression.(*ast.IfExpression)
+		if !ok {
+			t.Fatalf("stmt.Expression is not *ast.IfExpression. got=%T", stmt.Expression)
+		}
+		if ifExp.Condition.String() != tt.condition {
+			t.Fatalf("ifExp.Condition.String() not %s. got=%s", tt.condition, ifExp.Condition.String())
+		}
+		if ifExp.Consequence.String() != tt.consequence {
+			t.Fatalf("ifExp.Consequence.String() not %s. got=%s", tt.consequence, ifExp.Consequence.String())
+		}
+		if ifExp.Alternative == nil {
+			if tt.alternative != "" {
+				t.Fatalf("ifExp.Alternative is nil. got=%s", tt.alternative)
+			}
+		} else {
+			if ifExp.Alternative.String() != tt.alternative {
+				t.Fatalf("ifExp.Alternative.String() not %s. got=%s", tt.alternative, ifExp.Alternative.String())
+			}
+		}
+	}
+}
