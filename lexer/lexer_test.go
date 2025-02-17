@@ -29,6 +29,7 @@ while true {
 		continue;
 	}
 }
+"hoge";
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -124,6 +125,8 @@ while true {
 		{token.SEMICOLON, ";"},
 		{token.RBRACE, "}"},
 		{token.RBRACE, "}"},
+		{token.STRING, "hoge"},
+		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}
 

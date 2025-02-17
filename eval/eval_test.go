@@ -29,6 +29,17 @@ func testBooleanObject(t *testing.T, evaluated object.Object, expected bool) {
 	}
 }
 
+func testStringObject(t *testing.T, evaluated object.Object, expected string) {
+	result, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if result.Value != expected {
+		t.Fatalf("object has wrong value. got=%s, want=%s", result.Value, expected)
+	}
+}
+
 func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -91,11 +102,34 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"(1 < 2) == false", false},
 		{"(1 > 2) == true", false},
 		{"(1 > 2) == false", true},
+		{`"a" < "b"`, true},
+		{`"b" < "a"`, false},
+		{`"b" > "a"`, true},
+		{`"a" > "b"`, false},
+		{`"hoge" == "hoge"`, true},
+		{`"hoge" == "fuga"`, false},
+		{`"hoge" != "fuga"`, true},
+		{`"hoge" != "hoge"`, false},
 	}
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		testBooleanObject(t, evaluated, tt.expected)
+	}
+}
+
+func TestEvalStringExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`"hoge";`, "hoge"},
+		{`"hoge" + "hoge";`, "hogehoge"},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testStringObject(t, evaluated, tt.expected)
 	}
 }
 

@@ -56,12 +56,38 @@ func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{
 	case int64:
 		return testIntegerLiteral(t, exp, v)
 	case string:
-		return testIdentifier(t, exp, v)
+		switch exp.(type) {
+		case *ast.StringLiteral:
+			return testStringLiteral(t, exp, v)
+		case *ast.Identifier:
+			return testIdentifier(t, exp, v)
+		}
+		t.Fatalf("type of exp not handled. got=%T", exp)
 	case bool:
 		return testBoolean(t, exp, v)
 	}
 	t.Errorf("type of exp not handled. got=%T", exp)
 	return false
+}
+
+func testStringLiteral(t *testing.T, exp ast.Expression, v string) bool {
+	str, ok := exp.(*ast.StringLiteral)
+	if !ok {
+		t.Errorf("exp not *ast.StringLiteral. got=%T", exp)
+		return false
+	}
+
+	if str.Value != v {
+		t.Errorf("str.Value not %s. got=%s", v, str.Value)
+		return false
+	}
+
+	if str.TokenLiteral() != v {
+		t.Errorf("str.TokenLiteral not %s. got=%s", v, str.TokenLiteral())
+		return false
+	}
+
+	return true
 }
 
 func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
@@ -146,6 +172,7 @@ func TestVarStatements(t *testing.T) {
 		{"var x = 5;", "x", 5},
 		{"var y = true;", "y", true},
 		{"var foobar = y;", "foobar", "y"},
+		{`var hoge = "hoge";`, "hoge", "hoge"},
 	}
 
 	for _, tt := range tests {
@@ -186,6 +213,13 @@ func TestInfixExpressions(t *testing.T) {
 		{"5 < 5;", 5, "<", 5},
 		{"5 == 5;", 5, "==", 5},
 		{"5 != 5;", 5, "!=", 5},
+		{"true == true;", true, "==", true},
+		{"true != false;", true, "!=", false},
+		{"false == false;", false, "==", false},
+		{"false != true;", false, "!=", true},
+		{`"hoge" + "fuga";`, "hoge", "+", "fuga"},
+		{`"hoge" == "hoge";`, "hoge", "==", "hoge"},
+		{`"hoge" != "fuga";`, "hoge", "!=", "fuga"},
 	}
 
 	for _, tt := range tests {
@@ -224,6 +258,7 @@ func TestAssignExpression(t *testing.T) {
 		{"x = 5;", "x", 5},
 		{"y = true;", "y", true},
 		{"foobar = y;", "foobar", "y"},
+		{`hoge = "hoge";`, "hoge", "hoge"},
 	}
 
 	for _, tt := range tests {
