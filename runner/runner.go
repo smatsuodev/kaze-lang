@@ -25,5 +25,5 @@ func RunFile(path string) {
 	}
 
 	env := object.NewEnvironment()
-	println(eval.Eval(program, env).Inspect())
+	eval.Eval(program, env)
 }

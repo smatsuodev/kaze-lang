@@ -127,11 +127,14 @@ func evalWhileStatement(node *ast.WhileStatement, env *object.Environment) objec
 }
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
-	val, ok := env.Get(node.Value)
-	if !ok {
-		return newError("identifier not found: " + node.Value)
+	if val, ok := env.Get(node.Value); ok {
+		return val
 	}
-	return val
+	if val, ok := builtins[node.Value]; ok {
+		return val
+	}
+
+	return newError("identifier not found: " + node.Value)
 }
 
 func evalStatements(stmts []ast.Statement, env *object.Environment) object.Object {
@@ -242,6 +245,10 @@ func evalExpressions(expressions []ast.Expression, env *object.Environment) []ob
 }
 
 func applyFunction(fn object.Object, args []object.Object) object.Object {
+	if fn.Type() == object.BUILTIN_OBJ {
+		return fn.(*object.Builtin).Fn(args...)
+	}
+
 	function, ok := fn.(*object.Function)
 	if !ok {
 		return newError("not a function: %s", fn.Type())

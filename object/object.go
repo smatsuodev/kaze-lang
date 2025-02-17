@@ -21,6 +21,7 @@ const (
 	FUNCTION_OBJ = "FUNCTION"
 	BREAK_OBJ    = "BREAK"
 	CONTINUE_OBJ = "CONTINUE"
+	BUILTIN_OBJ  = "BUILTIN"
 )
 
 type Error struct {
@@ -81,3 +82,10 @@ type Continue struct{}
 
 func (c *Continue) Type() ObjectType { return CONTINUE_OBJ }
 func (c *Continue) Inspect() string  { return "continue" }
+
+type Builtin struct {
+	Fn func(args ...Object) Object
+}
+
+func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
+func (b *Builtin) Inspect() string  { return "builtin function" }
