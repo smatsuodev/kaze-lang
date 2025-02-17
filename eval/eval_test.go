@@ -7,6 +7,28 @@ import (
 	"testing"
 )
 
+func testIntegerObject(t *testing.T, evaluated object.Object, expected int64) {
+	result, ok := evaluated.(*object.Integer)
+	if !ok {
+		t.Fatalf("object is not Integer. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if result.Value != expected {
+		t.Fatalf("object has wrong value. got=%d, want=%d", result.Value, expected)
+	}
+}
+
+func testBooleanObject(t *testing.T, evaluated object.Object, expected bool) {
+	result, ok := evaluated.(*object.Boolean)
+	if !ok {
+		t.Fatalf("object is not Boolean. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if result.Value != expected {
+		t.Fatalf("object has wrong value. got=%t, want=%t", result.Value, expected)
+	}
+}
+
 func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -204,24 +226,18 @@ func TestIfExpressions(t *testing.T) {
 	}
 }
 
-func testIntegerObject(t *testing.T, evaluated object.Object, expected int64) {
-	result, ok := evaluated.(*object.Integer)
-	if !ok {
-		t.Fatalf("object is not Integer. got=%T (%+v)", evaluated, evaluated)
+func TestWhileStatement(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"var x = 0; while x < 10 { x = x + 1; } x;", 10},
+		{"var x = 0; while x < 10 { x = x + 1; if x == 5 { break; } } x;", 5},
+		{"var x = 0; var y = 0; while x < 10 { x = x + 1; if x > 5 { continue; } y = y + 1; } y;", 5},
 	}
 
-	if result.Value != expected {
-		t.Fatalf("object has wrong value. got=%d, want=%d", result.Value, expected)
-	}
-}
-
-func testBooleanObject(t *testing.T, evaluated object.Object, expected bool) {
-	result, ok := evaluated.(*object.Boolean)
-	if !ok {
-		t.Fatalf("object is not Boolean. got=%T (%+v)", evaluated, evaluated)
-	}
-
-	if result.Value != expected {
-		t.Fatalf("object has wrong value. got=%t, want=%t", result.Value, expected)
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
 	}
 }

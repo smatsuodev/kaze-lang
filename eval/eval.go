@@ -7,9 +7,11 @@ import (
 )
 
 var (
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
-	NULL  = &object.Null{}
+	TRUE     = &object.Boolean{Value: true}
+	FALSE    = &object.Boolean{Value: false}
+	NULL     = &object.Null{}
+	BREAK    = &object.Break{}
+	CONTINUE = &object.Continue{}
 )
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
@@ -32,6 +34,12 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.FunctionDefinitionStatement:
 		fn := &object.Function{Parameters: node.Parameters, Body: node.Body, Env: env}
 		env.Create(node.Name.Value, fn)
+	case *ast.WhileStatement:
+		return evalWhileStatement(node, env)
+	case *ast.BreakStatement:
+		return BREAK
+	case *ast.ContinueStatement:
+		return CONTINUE
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
 	case *ast.PrefixExpression:
@@ -99,6 +107,25 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	return nil
 }
 
+func evalWhileStatement(node *ast.WhileStatement, env *object.Environment) object.Object {
+	for isTruthy(Eval(node.Condition, env)) {
+		result := Eval(node.Body, env)
+		if isError(result) {
+			return result
+		}
+		if returnValue, ok := result.(*object.ReturnValue); ok {
+			return returnValue
+		}
+		if result == BREAK {
+			break
+		}
+		if result == CONTINUE {
+			continue
+		}
+	}
+	return NULL
+}
+
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
 	val, ok := env.Get(node.Value)
 	if !ok {
@@ -117,6 +144,9 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) object.Objec
 		}
 		if returnValue, ok := result.(*object.ReturnValue); ok {
 			return returnValue.Value
+		}
+		if result == BREAK || result == CONTINUE {
+			return result
 		}
 	}
 

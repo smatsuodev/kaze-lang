@@ -445,3 +445,34 @@ func TestIfExpressions(t *testing.T) {
 		}
 	}
 }
+
+func TestWhileStatement(t *testing.T) {
+	tests := []struct {
+		input     string
+		condition string
+		body      string
+	}{
+		{"while x < y { x }", "(x < y)", "x"},
+		{"while x < y { x + y }", "(x < y)", "(x + y)"},
+		{"while true { break; }", "true", "break"},
+		{"while true { continue; }", "true", "continue"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		stmt, ok := program.Statements[0].(*ast.WhileStatement)
+		if !ok {
+			t.Fatalf("stmt not *ast.WhileStatement. got=%T", program.Statements[0])
+		}
+		if stmt.Condition.String() != tt.condition {
+			t.Fatalf("stmt.Condition.String() not %s. got=%s", tt.condition, stmt.Condition.String())
+		}
+		if stmt.Body.String() != tt.body {
+			t.Fatalf("stmt.Body.String() not %s. got=%s", tt.body, stmt.Body.String())
+		}
+	}
+}

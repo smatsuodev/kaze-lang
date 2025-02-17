@@ -88,6 +88,34 @@ func (fds *FunctionDefinitionStatement) String() string {
 	return out
 }
 
+type WhileStatement struct {
+	Token     token.Token
+	Condition Expression
+	Body      Expression
+}
+
+func (ws *WhileStatement) statementNode()       {}
+func (ws *WhileStatement) TokenLiteral() string { return ws.Token.Literal }
+func (ws *WhileStatement) String() string {
+	return "while " + ws.Condition.String() + " " + ws.Body.String()
+}
+
+type BreakStatement struct {
+	Token token.Token
+}
+
+func (bs *BreakStatement) statementNode()       {}
+func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Literal }
+func (bs *BreakStatement) String() string       { return bs.TokenLiteral() }
+
+type ContinueStatement struct {
+	Token token.Token
+}
+
+func (cs *ContinueStatement) statementNode()       {}
+func (cs *ContinueStatement) TokenLiteral() string { return cs.Token.Literal }
+func (cs *ContinueStatement) String() string       { return cs.TokenLiteral() }
+
 type ExpressionStatement struct {
 	Token      token.Token
 	Expression Expression

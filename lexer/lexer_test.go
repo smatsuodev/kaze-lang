@@ -21,6 +21,14 @@ fun fuga(x, y) {
 1 < 1;
 1 > 1;
 !true;
+while true {
+	if true {
+		break;
+	}
+	if false {
+		continue;
+	}
+}
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -100,6 +108,22 @@ fun fuga(x, y) {
 		{token.BANG, "!"},
 		{token.TRUE, "true"},
 		{token.SEMICOLON, ";"},
+		{token.WHILE, "while"},
+		{token.TRUE, "true"},
+		{token.LBRACE, "{"},
+		{token.IF, "if"},
+		{token.TRUE, "true"},
+		{token.LBRACE, "{"},
+		{token.BREAK, "break"},
+		{token.SEMICOLON, ";"},
+		{token.RBRACE, "}"},
+		{token.IF, "if"},
+		{token.FALSE, "false"},
+		{token.LBRACE, "{"},
+		{token.CONTINUE, "continue"},
+		{token.SEMICOLON, ";"},
+		{token.RBRACE, "}"},
+		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	}
 

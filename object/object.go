@@ -19,6 +19,8 @@ const (
 	NULL_OBJ     = "NULL"
 	RETURN_OBJ   = "RETURN"
 	FUNCTION_OBJ = "FUNCTION"
+	BREAK_OBJ    = "BREAK"
+	CONTINUE_OBJ = "CONTINUE"
 )
 
 type Error struct {
@@ -69,3 +71,13 @@ func (f *Function) Type() ObjectType { return FUNCTION_OBJ }
 func (f *Function) Inspect() string {
 	return "fn(" + f.Parameters[0].String() + ") {\n" + f.Body.String() + "\n}"
 }
+
+type Break struct{}
+
+func (b *Break) Type() ObjectType { return BREAK_OBJ }
+func (b *Break) Inspect() string  { return "break" }
+
+type Continue struct{}
+
+func (c *Continue) Type() ObjectType { return CONTINUE_OBJ }
+func (c *Continue) Inspect() string  { return "continue" }

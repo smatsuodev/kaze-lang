@@ -153,6 +153,20 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.FUN:
 		return p.parseFunctionDefinitionStatement()
+	case token.WHILE:
+		return p.parseWhileStatement()
+	case token.BREAK:
+		stmt := &ast.BreakStatement{Token: p.curToken}
+		if p.peekTokenIs(token.SEMICOLON) {
+			p.nextToken()
+		}
+		return stmt
+	case token.CONTINUE:
+		stmt := &ast.ContinueStatement{Token: p.curToken}
+		if p.peekTokenIs(token.SEMICOLON) {
+			p.nextToken()
+		}
+		return stmt
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -230,6 +244,17 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 		return nil
 	}
 	return params
+}
+
+func (p *Parser) parseWhileStatement() ast.Statement {
+	stmt := &ast.WhileStatement{Token: p.curToken}
+	p.nextToken()
+	stmt.Condition = p.parseExpression(LOWEST)
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+	stmt.Body = p.parseBlockExpression()
+	return stmt
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
