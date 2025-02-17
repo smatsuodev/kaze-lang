@@ -511,3 +511,33 @@ func TestWhileStatement(t *testing.T) {
 		}
 	}
 }
+
+func TestIndexExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`"hoge"[0]`, `"hoge"[0]`},
+		{`"hoge"[1 + 1]`, `"hoge"[(1 + 1)]`},
+		{`func("hoge"[0])[func("hoge"[0])]`, `func("hoge"[0])[func("hoge"[0])]`},
+		{`"hoge"[0] + "hoge"[1]`, `("hoge"[0] + "hoge"[1])`},
+		{`"hoge"[0] == "hoge"[1]`, `("hoge"[0] == "hoge"[1])`},
+		{`"hoge"[0] != "hoge"[1]`, `("hoge"[0] != "hoge"[1])`},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt not *ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
+		if stmt.Expression.String() != tt.expected {
+			t.Fatalf("stmt.Expression.String() not %s. got=%s", tt.expected, stmt.Expression.String())
+		}
+	}
+}

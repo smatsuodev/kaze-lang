@@ -96,6 +96,16 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		return NULL
+	case *ast.IndexExpression:
+		array := Eval(node.Array, env)
+		if isError(array) {
+			return array
+		}
+		index := Eval(node.Index, env)
+		if isError(index) {
+			return index
+		}
+		return evalIndexExpression(array, index)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
@@ -107,6 +117,26 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	}
 
 	return nil
+}
+
+func evalIndexExpression(array object.Object, index object.Object) object.Object {
+	switch {
+	case array.Type() == object.STRING_OBJ && index.Type() == object.INTEGER_OBJ:
+		return evalStringIndexExpression(array, index)
+	default:
+		return newError("index operator not supported: %s", array.Type())
+	}
+}
+
+func evalStringIndexExpression(stringObj object.Object, indexObj object.Object) object.Object {
+	str := stringObj.(*object.String).Value
+	index := indexObj.(*object.Integer).Value
+
+	if index < 0 || index >= int64(len(str)) {
+		return newError("index out of range: %d", index)
+	}
+
+	return &object.String{Value: string(str[index])}
 }
 
 func evalWhileStatement(node *ast.WhileStatement, env *object.Environment) object.Object {

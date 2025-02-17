@@ -125,6 +125,11 @@ func TestEvalStringExpression(t *testing.T) {
 	}{
 		{`"hoge";`, "hoge"},
 		{`"hoge" + "hoge";`, "hogehoge"},
+		{`"hoge"[0]`, "h"},
+		{`"hoge"[0] + "fuga"[0]`, "hf"},
+		{`var a = "hoge"; var b = 0; a[b]`, "h"},
+		{`fun greet(name) { "Hello, " + name + "!"; }; greet("Alice");`, "Hello, Alice!"},
+		{`fun greet(name) { "Hello, " + name + "!"; }; fun add(x,y){x+y}; greet("Alice")[add(3,4)];`, "A"},
 	}
 
 	for _, tt := range tests {
