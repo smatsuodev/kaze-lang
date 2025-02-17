@@ -1,6 +1,9 @@
 package object
 
-import "strconv"
+import (
+	"kaze/ast"
+	"strconv"
+)
 
 type ObjectType string
 
@@ -10,11 +13,12 @@ type Object interface {
 }
 
 const (
-	ERROR_OBJ   = "ERROR"
-	INTEGER_OBJ = "INTEGER"
-	BOOLEAN_OBJ = "BOOLEAN"
-	NULL_OBJ    = "NULL"
-	RETURN_OBJ  = "RETURN"
+	ERROR_OBJ    = "ERROR"
+	INTEGER_OBJ  = "INTEGER"
+	BOOLEAN_OBJ  = "BOOLEAN"
+	NULL_OBJ     = "NULL"
+	RETURN_OBJ   = "RETURN"
+	FUNCTION_OBJ = "FUNCTION"
 )
 
 type Error struct {
@@ -54,3 +58,14 @@ type ReturnValue struct {
 
 func (rv *ReturnValue) Type() ObjectType { return RETURN_OBJ }
 func (rv *ReturnValue) Inspect() string  { return rv.Value.Inspect() }
+
+type Function struct {
+	Parameters []*ast.Identifier
+	Body       ast.Expression
+	Env        *Environment
+}
+
+func (f *Function) Type() ObjectType { return FUNCTION_OBJ }
+func (f *Function) Inspect() string {
+	return "fn(" + f.Parameters[0].String() + ") {\n" + f.Body.String() + "\n}"
+}

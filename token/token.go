@@ -32,6 +32,7 @@ const (
 	LBRACE    = "{"
 	RBRACE    = "}"
 	SEMICOLON = ";"
+	COMMA     = ","
 
 	VAR    = "VAR"
 	FUN    = "FUN"

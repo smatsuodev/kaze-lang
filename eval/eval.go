@@ -29,6 +29,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return val
 		}
 		return &object.ReturnValue{Value: val}
+	case *ast.FunctionDefinitionStatement:
+		fn := &object.Function{Parameters: node.Parameters, Body: node.Body, Env: env}
+		env.Create(node.Name.Value, fn)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
 	case *ast.PrefixExpression:
@@ -58,6 +61,18 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return value
 	case *ast.BlockExpression:
 		return evalStatements(node.Statements, object.NewEnclosedEnvironment(env))
+	case *ast.CallExpression:
+		fn := Eval(node.Function, env)
+		if isError(fn) {
+			return fn
+		}
+
+		args := evalExpressions(node.Arguments, env)
+		if len(args) == 1 && isError(args[0]) {
+			return args[0]
+		}
+
+		return applyFunction(fn, args)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
@@ -165,6 +180,48 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
+}
+
+func evalExpressions(expressions []ast.Expression, env *object.Environment) []object.Object {
+	var result []object.Object
+
+	for _, expression := range expressions {
+		expr := Eval(expression, env)
+		if isError(expr) {
+			return []object.Object{expr}
+		}
+		result = append(result, expr)
+	}
+
+	return result
+}
+
+func applyFunction(fn object.Object, args []object.Object) object.Object {
+	function, ok := fn.(*object.Function)
+	if !ok {
+		return newError("not a function: %s", fn.Type())
+	}
+
+	extendedEnv := extendFunctionEnv(function, args)
+	evaluated := Eval(function.Body, extendedEnv)
+	return unwrapReturnValue(evaluated)
+}
+
+func extendFunctionEnv(function *object.Function, args []object.Object) *object.Environment {
+	env := object.NewEnclosedEnvironment(function.Env)
+
+	for i, param := range function.Parameters {
+		env.Create(param.Value, args[i])
+	}
+
+	return env
+}
+
+func unwrapReturnValue(evaluated object.Object) object.Object {
+	if returnValue, ok := evaluated.(*object.ReturnValue); ok {
+		return returnValue.Value
+	}
+	return evaluated
 }
 
 func nativeBoolToBooleanObject(input bool) *object.Boolean {

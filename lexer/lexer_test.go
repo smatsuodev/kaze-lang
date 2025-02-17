@@ -9,7 +9,7 @@ func TestNextToken(t *testing.T) {
 	input := `1 + 2 - 3 * 4 / 5 * (6 + 7) - 8;
 1234567890;
 var hoge = 1;
-fun fuga(x) {
+fun fuga(x, y) {
     if (true) {
 		return x;
 	} else if (false) {
@@ -55,6 +55,8 @@ fun fuga(x) {
 		{token.IDENT, "fuga"},
 		{token.LPAREN, "("},
 		{token.IDENT, "x"},
+		{token.COMMA, ","},
+		{token.IDENT, "y"},
 		{token.RPAREN, ")"},
 		{token.LBRACE, "{"},
 		{token.IF, "if"},

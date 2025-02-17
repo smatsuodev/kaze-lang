@@ -68,6 +68,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
 	p.registerInfix(token.ASSIGN, p.parseAssignExpression)
+	p.registerInfix(token.LPAREN, p.parseCallExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -149,6 +150,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseVarStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
+	case token.FUN:
+		return p.parseFunctionDefinitionStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -183,6 +186,49 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 		p.nextToken()
 	}
 	return stmt
+}
+
+func (p *Parser) parseFunctionDefinitionStatement() ast.Statement {
+	stmt := &ast.FunctionDefinitionStatement{Token: p.curToken}
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	p.nextToken()
+	stmt.Parameters = p.parseFunctionParameters()
+
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+	stmt.Body = p.parseBlockExpression()
+	return stmt
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	var params []*ast.Identifier
+
+	if p.curTokenIs(token.RPAREN) {
+		return params
+	}
+
+	param := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	params = append(params, param)
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		param = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+		params = append(params, param)
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	return params
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
@@ -296,4 +342,35 @@ func (p *Parser) parseBlockExpression() ast.Expression {
 	}
 
 	return block
+}
+
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{Token: p.curToken, Function: function}
+
+	p.nextToken()
+	exp.Arguments = p.parseCallArguments()
+
+	return exp
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	var args []ast.Expression
+
+	if p.curTokenIs(token.RPAREN) {
+		return args
+	}
+
+	args = append(args, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return args
 }

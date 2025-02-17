@@ -148,6 +148,24 @@ func TestReturnStatements(t *testing.T) {
 	}
 }
 
+func TestFunctions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"fun identity(x) { x; } identity(5);", 5},
+		{"fun identity(x) { return x; } identity(5);", 5},
+		{"fun sum(x, y) { x + y; } sum(5, 10);", 15},
+		{"fun sum(x, y) { x + y; } sum(5 + 5, 10 + 10);", 30},
+		{"fun sum(x, y) { var a = x + y; a; } sum(5, 10);", 15},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
 func testIntegerObject(t *testing.T, evaluated object.Object, expected int64) {
 	result, ok := evaluated.(*object.Integer)
 	if !ok {

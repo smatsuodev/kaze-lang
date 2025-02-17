@@ -62,6 +62,32 @@ func (rs *ReturnStatement) String() string {
 	return rs.TokenLiteral() + " " + rs.ReturnValue.String() + ";"
 }
 
+type FunctionDefinitionStatement struct {
+	Token      token.Token
+	Name       *Identifier
+	Parameters []*Identifier
+	Body       Expression
+}
+
+func (fds *FunctionDefinitionStatement) statementNode()       {}
+func (fds *FunctionDefinitionStatement) TokenLiteral() string { return fds.Token.Literal }
+func (fds *FunctionDefinitionStatement) String() string {
+	var out string
+
+	out += fds.TokenLiteral() + " " + fds.Name.String() + "("
+
+	for i, p := range fds.Parameters {
+		out += p.String()
+		if i < len(fds.Parameters)-1 {
+			out += ", "
+		}
+	}
+
+	out += ") {\n" + fds.Body.String() + "\n}"
+
+	return out
+}
+
 type ExpressionStatement struct {
 	Token      token.Token
 	Expression Expression
@@ -153,6 +179,29 @@ func (bs *BlockExpression) String() string {
 	for _, s := range bs.Statements {
 		out += s.String()
 	}
+
+	return out
+}
+
+type CallExpression struct {
+	Token     token.Token
+	Function  Expression
+	Arguments []Expression
+}
+
+func (ce *CallExpression) expressionNode()      {}
+func (ce *CallExpression) TokenLiteral() string { return ce.Token.Literal }
+func (ce *CallExpression) String() string {
+	var out string
+
+	out += ce.Function.String() + "("
+	for i, arg := range ce.Arguments {
+		out += arg.String()
+		if i < len(ce.Arguments)-1 {
+			out += ", "
+		}
+	}
+	out += ")"
 
 	return out
 }
