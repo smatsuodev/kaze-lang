@@ -17,7 +17,11 @@ var (
 func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalStatements(node.Statements, env)
+		evaluated := evalStatements(node.Statements, env)
+		if returnValue, ok := evaluated.(*object.ReturnValue); ok {
+			return returnValue.Value
+		}
+		return evaluated
 	case *ast.VarStatement:
 		value := Eval(node.Value, env)
 		if isError(value) {
@@ -245,7 +249,7 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) object.Objec
 			return result
 		}
 		if returnValue, ok := result.(*object.ReturnValue); ok {
-			return returnValue.Value
+			return returnValue
 		}
 		if result == BREAK || result == CONTINUE {
 			return result

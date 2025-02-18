@@ -25,5 +25,10 @@ func RunFile(path string) {
 	}
 
 	env := object.NewEnvironment()
-	eval.Eval(program, env)
+	evaluated := eval.Eval(program, env)
+	switch e := evaluated.(type) {
+	case *object.Error:
+		println(e.Message)
+		os.Exit(1)
+	}
 }

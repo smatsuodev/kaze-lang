@@ -44,7 +44,7 @@ var builtins = map[string]*object.Builtin{
 
 			var _args []object.Object
 			for _, arg := range os.Args {
-				_args = append(args, &object.String{Value: arg})
+				_args = append(_args, &object.String{Value: arg})
 			}
 			return &object.Array{Elements: _args}
 		},
