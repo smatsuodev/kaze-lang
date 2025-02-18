@@ -350,12 +350,28 @@ func TestHashIndexExpressions(t *testing.T) {
 	}
 }
 
+func TestHashAssignment(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{`var a = #{"foo":1}; a["foo"] = 5; a["foo"];`, 5},
+		{`var a = #{"foo":1, "bar":2}; a["foo"] = 5; a["bar"];`, 2},
+		{`var a = #{"foo": #{"bar":1}}; a["foo"]["bar"]=5; a["foo"]["bar"]`, 5},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
 func TestArrayLiterals(t *testing.T) {
 	input := `[1, 2 * 2, 3 + 3]`
 	evaluated := testEval(input)
 	result, ok := evaluated.(*object.Array)
 	if !ok {
-		t.Fatalf("object is not Array. got=%T (%+v)", evaluated, evaluated)
+		t.Fatalf("object is not Left. got=%T (%+v)", evaluated, evaluated)
 	}
 
 	if len(result.Elements) != 3 {
@@ -372,4 +388,22 @@ func TestMultiDimensionalArrayLiterals(t *testing.T) {
 
 	evaluated := testEval(input)
 	testIntegerObject(t, evaluated, 4)
+}
+
+func TestArrayAssignment(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"var a = [1, 2, 3]; a[0] = 5; a[0];", 5},
+		{"var a = [1, 2, 3]; a[0] = 5; a[1];", 2},
+		{"var a = [1, 2, 3]; a[0] = 5; a[2];", 3},
+		{"var a = [[1, 2], [3, 4]]; a[0][0] = 5; a[0][0];", 5},
+		{"var a = [[1, 2], [3, 4]]; a[0][0] = 5; a[0][1];", 2},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
 }

@@ -63,14 +63,20 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.AssignExpression:
+		lvalue, err := evalLValue(node.Left, env)
+		if err != nil {
+			return err
+		}
+
 		value := Eval(node.Value, env)
 		if isError(value) {
 			return value
 		}
-		if _, ok := env.Update(node.Name.Value, value); !ok {
-			return newError("variable not found: %s", node.Name.Value)
+
+		if result, ok := lvalue.Update(value); ok {
+			return result
 		}
-		return value
+		return newError("assignment failed")
 	case *ast.BlockExpression:
 		return evalStatements(node.Statements, object.NewEnclosedEnvironment(env))
 	case *ast.CallExpression:
@@ -101,7 +107,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 		return NULL
 	case *ast.IndexExpression:
-		array := Eval(node.Array, env)
+		array := Eval(node.Left, env)
 		if isError(array) {
 			return array
 		}
@@ -125,6 +131,21 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	}
 
 	return nil
+}
+
+func evalLValue(node ast.Expression, env *object.Environment) (object.LValue, *object.Error) {
+	switch node := node.(type) {
+	case *ast.Identifier:
+		return &object.Variable{Name: node.Value, Env: env}, nil
+	case *ast.IndexExpression:
+		array, err := evalLValue(node.Left, env)
+		if err != nil {
+			return nil, err
+		}
+		index := Eval(node.Index, env)
+		return &object.IndexRef{Left: array, Index: index}, nil
+	}
+	return nil, newError("not a lvalue: %s", node.String())
 }
 
 func evalArrayLiteral(node *ast.ArrayLiteral, env *object.Environment) object.Object {

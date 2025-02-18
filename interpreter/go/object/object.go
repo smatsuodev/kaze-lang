@@ -33,6 +33,7 @@ const (
 	BUILTIN_OBJ  = "BUILTIN"
 	HASH_OBJ     = "HASH"
 	ARRAY_OBJ    = "ARRAY"
+	LVALUE_OBJ   = "LVALUE"
 )
 
 type Error struct {
@@ -196,4 +197,122 @@ func (a *Array) Inspect() string {
 }
 func (a *Array) String() string {
 	return a.Inspect()
+}
+
+type LValue interface {
+	Object
+	Get() (Object, bool)
+	Update(Object) (Object, bool)
+}
+
+type Variable struct {
+	Name string
+	Env  *Environment
+}
+
+func (v *Variable) Type() ObjectType {
+	return LVALUE_OBJ
+}
+func (v *Variable) Inspect() string {
+	return LVALUE_OBJ
+}
+func (v *Variable) Get() (Object, bool) {
+	return v.Env.Get(v.Name)
+}
+func (v *Variable) Update(val Object) (Object, bool) {
+	return v.Env.Update(v.Name, val)
+}
+
+type IndexRef struct {
+	Left  LValue
+	Index Object
+}
+
+func (ir *IndexRef) Type() ObjectType {
+	return LVALUE_OBJ
+}
+func (ir *IndexRef) Inspect() string {
+	return ir.Left.Inspect()
+}
+func (ir *IndexRef) Get() (Object, bool) {
+	left, ok := ir.Left.Get()
+	if !ok {
+		return nil, false
+	}
+
+	switch obj := left.(type) {
+	case *Array:
+		index, ok := ir.Index.(*Integer)
+		if !ok || index.Value < 0 || int(index.Value) >= len(obj.Elements) {
+			return nil, false
+		}
+
+		return obj.Elements[index.Value], true
+	case *Hash:
+		hashKey, ok := ir.Index.(Hashable)
+		if !ok {
+			return nil, false
+		}
+
+		key := hashKey.HashKey()
+		pair, ok := obj.Pairs[key]
+		if !ok {
+			return nil, false
+		}
+
+		return pair.Value, true
+	case *String:
+		index, ok := ir.Index.(*Integer)
+		if !ok || index.Value < 0 || int(index.Value) >= len(obj.Value) {
+			return nil, false
+		}
+
+		return &String{Value: string(obj.Value[index.Value])}, true
+	}
+	return nil, false
+}
+func (ir *IndexRef) Update(val Object) (Object, bool) {
+	left, ok := ir.Left.Get()
+	if !ok {
+		return nil, false
+	}
+
+	switch obj := left.(type) {
+	case *Array:
+		index, ok := ir.Index.(*Integer)
+		if !ok || index.Value < 0 || int(index.Value) >= len(obj.Elements) {
+			return nil, false
+		}
+
+		obj.Elements[index.Value] = val
+		return val, true
+	case *Hash:
+		hashKey, ok := ir.Index.(Hashable)
+		if !ok {
+			return nil, false
+		}
+
+		key := hashKey.HashKey()
+		obj.Pairs[key] = HashPair{Key: ir.Index, Value: val}
+		return val, true
+	case *String:
+		index, ok := ir.Index.(*Integer)
+		if !ok || index.Value < 0 || int(index.Value) >= len(obj.Value) {
+			return nil, false
+		}
+
+		val, ok := val.(*String)
+		if !ok {
+			return nil, false
+		}
+
+		if len(val.Value) != 1 {
+			return nil, false
+		}
+
+		obj.Value = obj.Value[:index.Value] + val.Value + obj.Value[index.Value+1:]
+		return val, true
+	}
+
+	return nil, false
 }

@@ -1,1 +1,24 @@
-return 1;
+var input = args()[2];
+
+fun newLexer(input) {
+  #{
+    input: input,
+    pos: 0,
+    nextPos: 0,
+    ch: "",
+  }
+}
+
+fun readChar(lexer) {
+  if (lexer.nextPos >= lexer.input.length) {
+    lexer.ch = "";
+  } else {
+    lexer.ch = lexer.input[lexer.nextPos];
+  }
+  lexer.pos = lexer.nextPos;
+  lexer.nextPos += 1;
+}
+
+fun nextToken(lexer) {
+
+}

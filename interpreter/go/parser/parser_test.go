@@ -37,12 +37,12 @@ func testVarStatement(t *testing.T, stmt ast.Statement, s string) bool {
 	}
 
 	if varStmt.Name.Value != s {
-		t.Errorf("varStmt.Name.Value not '%s'. got=%s", s, varStmt.Name.Value)
+		t.Errorf("varStmt.Left.Value not '%s'. got=%s", s, varStmt.Name.Value)
 		return false
 	}
 
 	if varStmt.Name.TokenLiteral() != s {
-		t.Errorf("varStmt.Name.TokenLiteral not '%s'. got=%s", s, varStmt.Name.TokenLiteral())
+		t.Errorf("varStmt.Left.TokenLiteral not '%s'. got=%s", s, varStmt.Name.TokenLiteral())
 		return false
 	}
 
@@ -282,8 +282,12 @@ func TestAssignExpression(t *testing.T) {
 			t.Fatalf("stmt.Expression is not ast.AssignExpression. got=%T", stmt.Expression)
 		}
 
-		if exp.Name.Value != tt.name {
-			t.Fatalf("exp.Name.Value not '%s'. got=%s", tt.name, exp.Name.Value)
+		ident, ok := exp.Left.(*ast.Identifier)
+		if !ok {
+			t.Fatalf("exp.Left is not ast.Identifier. got=%T", exp.Left)
+		}
+		if ident.Value != tt.name {
+			t.Fatalf("ident.Value not '%s'. got=%s", tt.name, ident.Value)
 		}
 
 		if !testLiteralExpression(t, exp.Value, tt.value) {
@@ -387,7 +391,7 @@ func TestFunctionDefinitionStatement(t *testing.T) {
 			t.Fatalf("stmt not *ast.FunctionDefinitionStatement. got=%T", stmt)
 		}
 		if fds.Name.Value != tt.expectedName {
-			t.Fatalf("fds.Name.Value not %s. got=%s", tt.expectedName, fds.Name.Value)
+			t.Fatalf("fds.Left.Value not %s. got=%s", tt.expectedName, fds.Name.Value)
 		}
 		if len(fds.Parameters) != len(tt.expectedParameters) {
 			t.Fatalf("len(fds.Parameters) not %d. got=%d", len(tt.expectedParameters), len(fds.Parameters))

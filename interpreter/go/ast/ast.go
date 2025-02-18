@@ -184,14 +184,14 @@ func (ie *InfixExpression) String() string {
 
 type AssignExpression struct {
 	Token token.Token
-	Name  *Identifier
+	Left  Expression
 	Value Expression
 }
 
 func (ae *AssignExpression) expressionNode()      {}
 func (ae *AssignExpression) TokenLiteral() string { return ae.Token.Literal }
 func (ae *AssignExpression) String() string {
-	return ae.Name.String() + " = " + ae.Value.String()
+	return ae.Left.String() + " = " + ae.Value.String()
 }
 
 type BlockExpression struct {
@@ -266,14 +266,14 @@ func (sl *StringLiteral) String() string       { return "\"" + sl.Token.Literal 
 
 type IndexExpression struct {
 	Token token.Token
-	Array Expression
+	Left  Expression
 	Index Expression
 }
 
 func (ie *IndexExpression) expressionNode()      {}
 func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *IndexExpression) String() string {
-	return ie.Array.String() + "[" + ie.Index.String() + "]"
+	return ie.Left.String() + "[" + ie.Index.String() + "]"
 }
 
 type HashLiteral struct {

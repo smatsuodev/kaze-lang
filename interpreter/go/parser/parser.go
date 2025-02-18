@@ -337,6 +337,34 @@ func (p *Parser) parseInfixExpression(expression ast.Expression) ast.Expression 
 }
 
 func (p *Parser) parseAssignExpression(expression ast.Expression) ast.Expression {
+	switch expression.(type) {
+	case *ast.Identifier:
+		return p.parseAssignToVaraible(expression)
+	case *ast.IndexExpression:
+		return p.parseAssignToIndex(expression)
+	}
+	p.errors = append(p.errors, fmt.Sprintf("unexpected expression on left side of =: %T", expression))
+	return nil
+}
+
+func (p *Parser) parseAssignToIndex(expression ast.Expression) ast.Expression {
+	indexExp, ok := expression.(*ast.IndexExpression)
+	if !ok {
+		msg := fmt.Sprintf("expected index expression on left side of =, got %T", expression)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	exp := &ast.AssignExpression{
+		Token: p.curToken,
+		Left:  indexExp,
+	}
+	precedence := p.curPrecedence()
+	p.nextToken()
+	exp.Value = p.parseExpression(precedence)
+	return exp
+}
+
+func (p *Parser) parseAssignToVaraible(expression ast.Expression) ast.Expression {
 	ident, ok := expression.(*ast.Identifier)
 	if !ok {
 		msg := fmt.Sprintf("expected identifier on left side of =, got %T", expression)
@@ -345,7 +373,7 @@ func (p *Parser) parseAssignExpression(expression ast.Expression) ast.Expression
 	}
 	exp := &ast.AssignExpression{
 		Token: p.curToken,
-		Name:  ident,
+		Left:  ident,
 	}
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -438,7 +466,7 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 func (p *Parser) parseIndexExpression(expression ast.Expression) ast.Expression {
 	exp := &ast.IndexExpression{
 		Token: p.curToken,
-		Array: expression,
+		Left:  expression,
 	}
 	p.nextToken()
 	exp.Index = p.parseExpression(LOWEST)
