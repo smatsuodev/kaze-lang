@@ -1,24 +1,90 @@
-var input = args()[2];
+// var input = args()[2];
 
 fun newLexer(input) {
   #{
-    input: input,
-    pos: 0,
-    nextPos: 0,
-    ch: "",
+    "input": input,
+    "pos": 0,
+    "nextPos": 0,
+    "ch": "",
   }
 }
 
 fun readChar(lexer) {
-  if (lexer.nextPos >= lexer.input.length) {
-    lexer.ch = "";
+  if (lexer["nextPos"] >= len(lexer["input"])) {
+    lexer["ch"] = "";
   } else {
-    lexer.ch = lexer.input[lexer.nextPos];
+    lexer["ch"] = lexer["input"][lexer["nextPos"]];
   }
-  lexer.pos = lexer.nextPos;
-  lexer.nextPos += 1;
+  lexer["pos"] = lexer["nextPos"];
+  lexer["nextPos"] = lexer["nextPos"] + 1;
+}
+
+fun skipWhitespace(lexer) {
+  var ch = lexer["ch"];
+  while (ch == " " || ch == "\t" || ch == "\n" || ch == "\r") {
+    readChar(lexer);
+    ch = lexer["ch"];
+  }
 }
 
 fun nextToken(lexer) {
+  skipWhitespace(lexer);
 
+  var ch = lexer["ch"];
+  var token = #{
+    "type": "",
+    "literal": "",
+  };
+
+  if ch == "+" {
+    token["type"] = "PLUS";
+    token["literal"] = ch;
+  } else if ch == "-" {
+    token["type"] = "MINUS";
+    token["literal"] = ch;
+  } else if ch == "*" {
+    token["type"] = "ASTERISK";
+    token["literal"] = ch;
+  } else if ch == "/" {
+    token["type"] = "SLASH";
+    token["literal"] = ch;
+  } else if ch == "(" {
+    token["type"] = "LPAREN";
+    token["literal"] = ch;
+  } else if ch == ")" {
+    token["type"] = "RPAREN";
+    token["literal"] = ch;
+  } else if ch == "" {
+    token["type"] = "EOF";
+  } else {
+    if isDigit(ch) {
+      var literal = "";
+      while isDigit(ch) {
+        literal = literal + ch;
+        readChar(lexer);
+        ch = lexer["ch"];
+      }
+      token["type"] = "INT";
+      token["literal"] = literal;
+      return token;
+    } else {
+      token["type"] = "ILLEGAL";
+      token["literal"] = ch;
+    }
+  }
+
+  readChar(lexer);
+  return token;
 }
+
+fun testLexer() {
+  var input = "2 + 3 * 4";
+  var lexer = newLexer(input);
+  var token = nextToken(lexer);
+  while (token["type"] != "EOF") {
+    print(token);
+    token = nextToken(lexer);
+  }
+}
+
+testLexer();

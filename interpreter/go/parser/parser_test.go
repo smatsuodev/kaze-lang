@@ -458,6 +458,7 @@ func TestIfExpressions(t *testing.T) {
 		{"if x < y { x } else { y }", "(x < y)", "x", "y"},
 		{"if (x < y) { x }", "(x < y)", "x", ""},
 		{"if (x < y) { x } else { y }", "(x < y)", "x", "y"},
+		{"if x < y { x } else if x > y { y }", "(x < y)", "x", "if (x > y) y"},
 	}
 
 	for _, tt := range tests {
