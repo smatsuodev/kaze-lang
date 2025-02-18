@@ -15,6 +15,11 @@ type Object interface {
 	Inspect() string
 }
 
+type Printable interface {
+	Object
+	String() string
+}
+
 const (
 	ERROR_OBJ    = "ERROR"
 	NULL_OBJ     = "NULL"
@@ -36,11 +41,17 @@ type Error struct {
 
 func (e *Error) Type() ObjectType { return ERROR_OBJ }
 func (e *Error) Inspect() string  { return "ERROR: " + e.Message }
+func (e *Error) String() string {
+	return e.Inspect()
+}
 
 type Null struct{}
 
 func (n *Null) Type() ObjectType { return NULL_OBJ }
 func (n *Null) Inspect() string  { return "null" }
+func (n *Null) String() string {
+	return n.Inspect()
+}
 
 type Hashable interface {
 	HashKey() HashKey
@@ -59,6 +70,9 @@ func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
 func (i *Integer) Inspect() string  { return strconv.FormatInt(i.Value, 10) }
 func (i *Integer) HashKey() HashKey {
 	return HashKey{Type: i.Type(), Value: uint64(i.Value)}
+}
+func (i *Integer) String() string {
+	return i.Inspect()
 }
 
 type Boolean struct {
@@ -81,17 +95,23 @@ func (b *Boolean) HashKey() HashKey {
 	}
 	return HashKey{Type: b.Type(), Value: value}
 }
+func (b *Boolean) String() string {
+	return b.Inspect()
+}
 
 type String struct {
 	Value string
 }
 
 func (s *String) Type() ObjectType { return STRING_OBJ }
-func (s *String) Inspect() string  { return s.Value }
+func (s *String) Inspect() string  { return fmt.Sprintf(`"%s"`, s.Value) }
 func (s *String) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(s.Value))
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
+}
+func (s *String) String() string {
+	return s.Value
 }
 
 type ReturnValue struct {
@@ -115,6 +135,9 @@ func (f *Function) Inspect() string {
 	}
 	return fmt.Sprintf("fn(%s) {\n%s\n}", strings.Join(params, ", "), f.Body.String())
 }
+func (f *Function) String() string {
+	return f.Inspect()
+}
 
 type Break struct{}
 
@@ -132,6 +155,9 @@ type Builtin struct {
 
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
 func (b *Builtin) Inspect() string  { return "builtin function" }
+func (b *Builtin) String() string {
+	return b.Inspect()
+}
 
 type HashPair struct {
 	Key   Object
@@ -151,6 +177,9 @@ func (h *Hash) Inspect() string {
 
 	return "#{ " + strings.Join(pairs, ", ") + " }"
 }
+func (h *Hash) String() string {
+	return h.Inspect()[1:]
+}
 
 type Array struct {
 	Elements []Object
@@ -164,4 +193,7 @@ func (a *Array) Inspect() string {
 	}
 
 	return "[ " + strings.Join(elements, ", ") + " ]"
+}
+func (a *Array) String() string {
+	return a.Inspect()
 }

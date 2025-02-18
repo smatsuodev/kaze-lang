@@ -12,7 +12,11 @@ var builtins = map[string]*object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			var _args []string
 			for _, arg := range args {
-				_args = append(_args, arg.Inspect())
+				if arg, ok := arg.(object.Printable); ok {
+					_args = append(_args, arg.String())
+				} else {
+					return &object.Error{Message: fmt.Sprintf("cannot print type: %s", arg.Type())}
+				}
 			}
 			fmt.Print(strings.Join(_args, " "))
 			return NULL
@@ -22,19 +26,38 @@ var builtins = map[string]*object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			var _args []string
 			for _, arg := range args {
-				_args = append(_args, arg.Inspect())
+				if arg, ok := arg.(object.Printable); ok {
+					_args = append(_args, arg.String())
+				} else {
+					return &object.Error{Message: fmt.Sprintf("cannot print type: %s", arg.Type())}
+				}
 			}
 			fmt.Println(strings.Join(_args, " "))
 			return NULL
 		},
 	},
 	"args": {
-		Fn: func(_ ...object.Object) object.Object {
-			var args []object.Object
-			for _, arg := range os.Args {
-				args = append(args, &object.String{Value: arg})
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 0 {
+				return &object.Error{Message: fmt.Sprintf("wrong number of arguments. got=%d, want=0", len(args))}
 			}
-			return &object.Array{Elements: args}
+
+			var _args []object.Object
+			for _, arg := range os.Args {
+				_args = append(args, &object.String{Value: arg})
+			}
+			return &object.Array{Elements: _args}
+		},
+	},
+	"string": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return &object.Error{Message: fmt.Sprintf("wrong number of arguments. got=%d, want=1", len(args))}
+			}
+			if arg, ok := args[0].(object.Printable); ok {
+				return &object.String{Value: arg.String()}
+			}
+			return &object.Error{Message: fmt.Sprintf("cannot convert type: %s to string", args[0].Type())}
 		},
 	},
 }
