@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"kaze/object"
+	"os"
 	"strings"
 )
 
@@ -25,6 +26,15 @@ var builtins = map[string]*object.Builtin{
 			}
 			fmt.Println(strings.Join(_args, " "))
 			return NULL
+		},
+	},
+	"args": {
+		Fn: func(_ ...object.Object) object.Object {
+			var args []object.Object
+			for _, arg := range os.Args {
+				args = append(args, &object.String{Value: arg})
+			}
+			return &object.Array{Elements: args}
 		},
 	},
 }
