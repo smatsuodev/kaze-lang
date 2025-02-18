@@ -62,6 +62,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.IF, p.parseIfExpression)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.HASH, p.parseHashLiteral)
+	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -381,31 +382,31 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	exp := &ast.CallExpression{Token: p.curToken, Function: function}
 
 	p.nextToken()
-	exp.Arguments = p.parseCallArguments()
+	exp.Arguments = p.parseEnclosedExpressions(token.RPAREN)
 
 	return exp
 }
 
-func (p *Parser) parseCallArguments() []ast.Expression {
-	var args []ast.Expression
+func (p *Parser) parseEnclosedExpressions(end token.TokenType) []ast.Expression {
+	var exps []ast.Expression
 
-	if p.curTokenIs(token.RPAREN) {
-		return args
+	if p.curTokenIs(end) {
+		return exps
 	}
 
-	args = append(args, p.parseExpression(LOWEST))
+	exps = append(exps, p.parseExpression(LOWEST))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		args = append(args, p.parseExpression(LOWEST))
+		exps = append(exps, p.parseExpression(LOWEST))
 	}
 
-	if !p.expectPeek(token.RPAREN) {
+	if !p.expectPeek(end) {
 		return nil
 	}
 
-	return args
+	return exps
 }
 
 func (p *Parser) parseIfExpression() ast.Expression {
@@ -473,4 +474,11 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 	}
 
 	return hash
+}
+
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	array := &ast.ArrayLiteral{Token: p.curToken}
+	p.nextToken()
+	array.Elements = p.parseEnclosedExpressions(token.RBRACKET)
+	return array
 }

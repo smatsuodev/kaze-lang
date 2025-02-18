@@ -296,3 +296,27 @@ func (hl *HashLiteral) String() string {
 
 	return out
 }
+
+type ArrayLiteral struct {
+	Token    token.Token
+	Elements []Expression
+}
+
+func (al *ArrayLiteral) expressionNode()      {}
+func (al *ArrayLiteral) TokenLiteral() string { return al.Token.Literal }
+func (al *ArrayLiteral) String() string {
+	var out string
+
+	out = "["
+
+	for i, elem := range al.Elements {
+		out += elem.String()
+		if i < len(al.Elements)-1 {
+			out += ", "
+		}
+	}
+
+	out += "]"
+
+	return out
+}

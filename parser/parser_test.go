@@ -649,3 +649,56 @@ func TestHashLiteralWithExpressions(t *testing.T) {
 		testFunc(value)
 	}
 }
+
+func TestArrayLiteral(t *testing.T) {
+	input := `[1, 2 * 2, "hoge", foo, (1 + 2), #{"foo": "bar"}, [1, 2, 3]]`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("stmt not *ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	array, ok := stmt.Expression.(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.ArrayLiteral. got=%T", stmt.Expression)
+	}
+
+	if len(array.Elements) != 7 {
+		t.Fatalf("len(array.Elements) not 7. got=%d", len(array.Elements))
+	}
+
+	testIntegerLiteral(t, array.Elements[0], 1)
+	testInfixExpression(t, array.Elements[1].(*ast.InfixExpression), 2, "*", 2)
+	testStringLiteral(t, array.Elements[2], "hoge")
+	testIdentifier(t, array.Elements[3], "foo")
+	testInfixExpression(t, array.Elements[4].(*ast.InfixExpression), 1, "+", 2)
+
+	hash, ok := array.Elements[5].(*ast.HashLiteral)
+	if !ok {
+		t.Fatalf("array.Elements[5] is not ast.HashLiteral. got=%T", array.Elements[5])
+	}
+	if len(hash.Pairs) != 1 {
+		t.Fatalf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
+	}
+	for keyNode, valueNode := range hash.Pairs {
+		testStringLiteral(t, keyNode, "foo")
+		testStringLiteral(t, valueNode, "bar")
+	}
+
+	arr, ok := array.Elements[6].(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("array.Elements[6] is not ast.ArrayLiteral. got=%T", array.Elements[6])
+	}
+	if len(arr.Elements) != 3 {
+		t.Fatalf("arr.Elements has wrong length. got=%d", len(arr.Elements))
+	}
+
+	for i, elem := range arr.Elements {
+		testIntegerLiteral(t, elem, int64(i+1))
+	}
+}

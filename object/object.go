@@ -27,6 +27,7 @@ const (
 	CONTINUE_OBJ = "CONTINUE"
 	BUILTIN_OBJ  = "BUILTIN"
 	HASH_OBJ     = "HASH"
+	ARRAY_OBJ    = "ARRAY"
 )
 
 type Error struct {
@@ -149,4 +150,18 @@ func (h *Hash) Inspect() string {
 	}
 
 	return "#{ " + strings.Join(pairs, ", ") + " }"
+}
+
+type Array struct {
+	Elements []Object
+}
+
+func (a *Array) Type() ObjectType { return ARRAY_OBJ }
+func (a *Array) Inspect() string {
+	elements := make([]string, 0)
+	for _, el := range a.Elements {
+		elements = append(elements, el.Inspect())
+	}
+
+	return "[ " + strings.Join(elements, ", ") + " ]"
 }
