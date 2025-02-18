@@ -20,6 +20,7 @@ fun fuga(x, y) {
 1 != 1;
 1 < 1;
 1 > 1;
+1 <= 2 >= 1;
 !true;
 while true {
 	if true {
@@ -106,6 +107,12 @@ while true {
 		{token.SEMICOLON, ";"},
 		{token.INT, "1"},
 		{token.GT, ">"},
+		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+		{token.INT, "1"},
+		{token.LE, "<="},
+		{token.INT, "2"},
+		{token.GE, ">="},
 		{token.INT, "1"},
 		{token.SEMICOLON, ";"},
 		{token.BANG, "!"},

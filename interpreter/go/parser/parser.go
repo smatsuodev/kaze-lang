@@ -29,6 +29,8 @@ var precedences = map[token.TokenType]int{
 	token.NOT_EQ:   EQUALS,
 	token.LT:       LESSGREATER,
 	token.GT:       LESSGREATER,
+	token.LE:       LESSGREATER,
+	token.GE:       LESSGREATER,
 	token.PLUS:     SUM,
 	token.MINUS:    SUM,
 	token.ASTERISK: PRODUCT,
@@ -73,6 +75,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.LE, p.parseInfixExpression)
+	p.registerInfix(token.GE, p.parseInfixExpression)
 	p.registerInfix(token.ASSIGN, p.parseAssignExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
@@ -339,7 +343,7 @@ func (p *Parser) parseInfixExpression(expression ast.Expression) ast.Expression 
 func (p *Parser) parseAssignExpression(expression ast.Expression) ast.Expression {
 	switch expression.(type) {
 	case *ast.Identifier:
-		return p.parseAssignToVaraible(expression)
+		return p.parseAssignToVariable(expression)
 	case *ast.IndexExpression:
 		return p.parseAssignToIndex(expression)
 	}
@@ -364,7 +368,7 @@ func (p *Parser) parseAssignToIndex(expression ast.Expression) ast.Expression {
 	return exp
 }
 
-func (p *Parser) parseAssignToVaraible(expression ast.Expression) ast.Expression {
+func (p *Parser) parseAssignToVariable(expression ast.Expression) ast.Expression {
 	ident, ok := expression.(*ast.Identifier)
 	if !ok {
 		msg := fmt.Sprintf("expected identifier on left side of =, got %T", expression)

@@ -27,6 +27,8 @@ const (
 
 	LT = "<"
 	GT = ">"
+	LE = "<="
+	GE = ">="
 
 	LPAREN    = "("
 	RPAREN    = ")"
