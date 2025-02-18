@@ -275,3 +275,24 @@ func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *IndexExpression) String() string {
 	return ie.Array.String() + "[" + ie.Index.String() + "]"
 }
+
+type HashLiteral struct {
+	Token token.Token
+	Pairs map[Expression]Expression
+}
+
+func (hl *HashLiteral) expressionNode()      {}
+func (hl *HashLiteral) TokenLiteral() string { return hl.Token.Literal }
+func (hl *HashLiteral) String() string {
+	var out string
+
+	out = "{"
+
+	for key, value := range hl.Pairs {
+		out += key.String() + ": " + value.String() + ", "
+	}
+
+	out += "}"
+
+	return out
+}

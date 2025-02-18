@@ -1,8 +1,11 @@
 package object
 
 import (
+	"fmt"
+	"hash/fnv"
 	"kaze/ast"
 	"strconv"
+	"strings"
 )
 
 type ObjectType string
@@ -23,6 +26,7 @@ const (
 	BREAK_OBJ    = "BREAK"
 	CONTINUE_OBJ = "CONTINUE"
 	BUILTIN_OBJ  = "BUILTIN"
+	HASH_OBJ     = "HASH"
 )
 
 type Error struct {
@@ -37,12 +41,24 @@ type Null struct{}
 func (n *Null) Type() ObjectType { return NULL_OBJ }
 func (n *Null) Inspect() string  { return "null" }
 
+type Hashable interface {
+	HashKey() HashKey
+}
+
+type HashKey struct {
+	Type  ObjectType
+	Value uint64
+}
+
 type Integer struct {
 	Value int64
 }
 
 func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
 func (i *Integer) Inspect() string  { return strconv.FormatInt(i.Value, 10) }
+func (i *Integer) HashKey() HashKey {
+	return HashKey{Type: i.Type(), Value: uint64(i.Value)}
+}
 
 type Boolean struct {
 	Value bool
@@ -55,6 +71,15 @@ func (b *Boolean) Inspect() string {
 	}
 	return "false"
 }
+func (b *Boolean) HashKey() HashKey {
+	var value uint64
+	if b.Value {
+		value = 1
+	} else {
+		value = 0
+	}
+	return HashKey{Type: b.Type(), Value: value}
+}
 
 type String struct {
 	Value string
@@ -62,6 +87,11 @@ type String struct {
 
 func (s *String) Type() ObjectType { return STRING_OBJ }
 func (s *String) Inspect() string  { return s.Value }
+func (s *String) HashKey() HashKey {
+	h := fnv.New64a()
+	h.Write([]byte(s.Value))
+	return HashKey{Type: s.Type(), Value: h.Sum64()}
+}
 
 type ReturnValue struct {
 	Value Object
@@ -78,7 +108,11 @@ type Function struct {
 
 func (f *Function) Type() ObjectType { return FUNCTION_OBJ }
 func (f *Function) Inspect() string {
-	return "fn(" + f.Parameters[0].String() + ") {\n" + f.Body.String() + "\n}"
+	var params []string
+	for _, p := range f.Parameters {
+		params = append(params, p.String())
+	}
+	return fmt.Sprintf("fn(%s) {\n%s\n}", strings.Join(params, ", "), f.Body.String())
 }
 
 type Break struct{}
@@ -97,3 +131,22 @@ type Builtin struct {
 
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
 func (b *Builtin) Inspect() string  { return "builtin function" }
+
+type HashPair struct {
+	Key   Object
+	Value Object
+}
+
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (h *Hash) Type() ObjectType { return HASH_OBJ }
+func (h *Hash) Inspect() string {
+	pairs := make([]string, 0)
+	for _, pair := range h.Pairs {
+		pairs = append(pairs, pair.Key.Inspect()+": "+pair.Value.Inspect())
+	}
+
+	return "#{ " + strings.Join(pairs, ", ") + " }"
+}

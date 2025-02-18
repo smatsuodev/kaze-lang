@@ -34,8 +34,10 @@ const (
 	RBRACE    = "}"
 	LBRACKET  = "["
 	RBRACKET  = "]"
+	COLON     = ":"
 	SEMICOLON = ";"
 	COMMA     = ","
+	HASH      = "#"
 
 	VAR      = "VAR"
 	FUN      = "FUN"

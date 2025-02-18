@@ -68,16 +68,26 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBRACKET, l.ch)
 	case ']':
 		tok = newToken(token.RBRACKET, l.ch)
+	case ':':
+		tok = newToken(token.COLON, l.ch)
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case ',':
 		tok = newToken(token.COMMA, l.ch)
+	case '#':
+		tok = newToken(token.HASH, l.ch)
 	case 0:
 		tok.Type = token.EOF
 		tok.Literal = ""
 	case '"':
-		tok.Type = token.STRING
-		tok.Literal = l.readString()
+		literal, ok := l.readString()
+		tok.Literal = literal
+		if ok {
+			tok.Type = token.STRING
+		} else {
+			tok.Type = token.UNKNOWN
+		}
+		return tok
 	default:
 		if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
@@ -125,13 +135,19 @@ func (l *Lexer) readIdentifier() string {
 	return l.input[pos:l.pos]
 }
 
-func (l *Lexer) readString() string {
+func (l *Lexer) readString() (string, bool) {
 	l.readChar()
 	pos := l.pos
-	for l.ch != '"' {
+	for l.ch != '"' && l.ch != 0 && l.ch != '\n' {
 		l.readChar()
 	}
-	return l.input[pos:l.pos]
+	if l.ch != '"' {
+		println("string literal not terminated")
+		return "", false
+	}
+	result := l.input[pos:l.pos]
+	l.readChar()
+	return result, true
 }
 
 func isLetter(ch byte) bool {
