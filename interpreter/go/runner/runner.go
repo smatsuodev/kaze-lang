@@ -18,8 +18,9 @@ func RunFile(path string) {
 	p := parser.New(l)
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
+		println("PARSER ERROR: ")
 		for _, err := range p.Errors() {
-			println(err)
+			println("  ", err)
 		}
 		os.Exit(1)
 	}

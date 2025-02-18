@@ -660,7 +660,7 @@ func TestHashLiteralWithExpressions(t *testing.T) {
 }
 
 func TestArrayLiteral(t *testing.T) {
-	input := `[1, 2 * 2, "hoge", foo, (1 + 2), #{"foo": "bar"}, [1, 2, 3]]`
+	input := `[1, 2 * 2, "hoge", foo, (1 + 2), #{"foo": "bar"}, [1, 2, 3,]]`
 
 	l := lexer.New(input)
 	p := New(l)
@@ -709,5 +709,24 @@ func TestArrayLiteral(t *testing.T) {
 
 	for i, elem := range arr.Elements {
 		testIntegerLiteral(t, elem, int64(i+1))
+	}
+}
+
+func TestNullLiteral(t *testing.T) {
+	input := `null;`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("stmt not *ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	_, ok = stmt.Expression.(*ast.NullLiteral)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.NullLiteral. got=%T", stmt.Expression)
 	}
 }

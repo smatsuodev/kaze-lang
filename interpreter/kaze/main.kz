@@ -1,17 +1,17 @@
-// var input = args()[2];
-
 fun newLexer(input) {
-  #{
+  var lexer = #{
     "input": input,
     "pos": 0,
     "nextPos": 0,
     "ch": "",
-  }
+  };
+  readChar(lexer);
+  return lexer;
 }
 
 fun readChar(lexer) {
   if (lexer["nextPos"] >= len(lexer["input"])) {
-    lexer["ch"] = "";
+    lexer["ch"] = chr(0);
   } else {
     lexer["ch"] = lexer["input"][lexer["nextPos"]];
   }
@@ -20,10 +20,8 @@ fun readChar(lexer) {
 }
 
 fun skipWhitespace(lexer) {
-  var ch = lexer["ch"];
-  while (ch == " " || ch == "\t" || ch == "\n" || ch == "\r") {
+  while lexer["ch"] == " " || lexer["ch"] == "\t" || lexer["ch"] == "\n" || lexer["ch"] == "\r" {
     readChar(lexer);
-    ch = lexer["ch"];
   }
 }
 
@@ -32,30 +30,29 @@ fun nextToken(lexer) {
 
   var ch = lexer["ch"];
   var token = #{
-    "type": "",
-    "literal": "",
+    "type": "ILLEGAL",
+    "literal": ch,
   };
 
   if ch == "+" {
     token["type"] = "PLUS";
-    token["literal"] = ch;
   } else if ch == "-" {
     token["type"] = "MINUS";
-    token["literal"] = ch;
   } else if ch == "*" {
     token["type"] = "ASTERISK";
-    token["literal"] = ch;
   } else if ch == "/" {
     token["type"] = "SLASH";
-    token["literal"] = ch;
   } else if ch == "(" {
     token["type"] = "LPAREN";
-    token["literal"] = ch;
   } else if ch == ")" {
     token["type"] = "RPAREN";
-    token["literal"] = ch;
-  } else if ch == "" {
-    token["type"] = "EOF";
+  } else if ch == ";" {
+    token["type"] = "SEMICOLON";
+  } else if ord(lexer["ch"]) == 0 {
+    return #{
+      "type": "EOF",
+      "literal": "",
+    };
   } else {
     if isDigit(ch) {
       var literal = "";
@@ -67,9 +64,6 @@ fun nextToken(lexer) {
       token["type"] = "INT";
       token["literal"] = literal;
       return token;
-    } else {
-      token["type"] = "ILLEGAL";
-      token["literal"] = ch;
     }
   }
 
@@ -77,14 +71,239 @@ fun nextToken(lexer) {
   return token;
 }
 
+fun isDigit(ch) {
+  return "0" <= ch && ch <= "9";
+}
+
 fun testLexer() {
-  var input = "2 + 3 * 4";
+  var input = "+-*/()0 12 345 6789";
+  var expected = [
+    #{"type": "PLUS", "literal": "+"},
+    #{"type": "MINUS", "literal": "-"},
+    #{"type": "ASTERISK", "literal": "*"},
+    #{"type": "SLASH", "literal": "/"},
+    #{"type": "LPAREN", "literal": "("},
+    #{"type": "RPAREN", "literal": ")"},
+    #{"type": "INT", "literal": "0"},
+    #{"type": "INT", "literal": "12"},
+    #{"type": "INT", "literal": "345"},
+    #{"type": "INT", "literal": "6789"},
+    #{"type": "EOF", "literal": ""}
+  ];
+
   var lexer = newLexer(input);
-  var token = nextToken(lexer);
-  while (token["type"] != "EOF") {
-    print(token);
-    token = nextToken(lexer);
+  var i = 0;
+  while i < len(expected) {
+    var token = nextToken(lexer);
+    if token["type"] != expected[i]["type"] {
+      println("test failed: expected=", expected[i]["type"], ", got=", token["type"]);
+      return;
+    }
+    if token["literal"] != expected[i]["literal"] {
+      println("test failed: expected=", expected[i]["literal"], ", got=", token["literal"]);
+      return;
+    }
+    i = i + 1;
+  }
+}
+testLexer();
+
+fun newParser(lexer) {
+  fun _nextToken(parser) {
+    parser["curToken"] = parser["peekToken"];
+    parser["peekToken"] = nextToken(parser["lexer"]);
+  }
+
+  var parser = #{
+    "lexer": lexer,
+    "curToken": null,
+    "peekToken": null,
+    "nextToken": _nextToken,
+    "prefixParseFns": #{},
+    "infixParseFns": #{},
+  };
+  _nextToken(parser);
+  _nextToken(parser);
+
+  parser["prefixParseFns"]["INT"] = parseIntegerLiteral;
+  parser["prefixParseFns"]["MINUS"] = parsePrefixExpression;
+
+  return parser;
+}
+
+fun parsePrefixExpression(parser) {
+  var expression = #{
+    "type": "PrefixExpression",
+    "token": parser["curToken"],
+    "operator": parser["curToken"]["literal"],
+  };
+
+  parser["nextToken"](parser);
+  expression["right"] = parseExpression(parser);
+
+  return expression;
+}
+
+fun parseIntegerLiteral(parser) {
+  return #{
+    "type": "IntegerLiteral",
+    "token": parser["curToken"],
+    "value": int(parser["curToken"]["literal"]),
+  };
+}
+
+fun parseProgram(parser) {
+  var program = #{
+    "type": "Program",
+    "statements": [],
+  };
+
+  while parser["curToken"]["type"] != "EOF" {
+    var statement = parseStatement(parser);
+    if statement != null {
+      program["statements"] = append(program["statements"], statement);
+    }
+    parser["nextToken"](parser);
+  }
+
+  return program;
+}
+
+fun parseStatement(parser) {
+  return parseExpressionStatement(parser);
+}
+
+fun parseExpressionStatement(parser) {
+  var statement = #{
+    "type": "ExpressionStatement",
+    "token": parser["curToken"],
+    "expression": parseExpression(parser),
+  };
+
+  if parser["peekToken"]["type"] == "SEMICOLON" {
+    parser["nextToken"](parser);
+  }
+
+  return statement;
+}
+
+fun parseExpression(parser) {
+  var prefix = parser["prefixParseFns"][parser["curToken"]["type"]];
+  if prefix == null {
+    return null;
+  }
+  var leftExp = prefix(parser);
+
+  return leftExp;
+}
+
+fun testParser() {
+  var input = "-123;";
+  var expected = #{
+    "type": "Program",
+    "statements": [
+      #{
+        "type": "ExpressionStatement",
+        "expression": #{
+          "type": "PrefixExpression",
+          "operator": "-",
+          "right": #{
+            "type": "IntegerLiteral",
+            "value": 123,
+          },
+        },
+      },
+    ],
+  };
+
+  var lexer = newLexer(input);
+  var parser = newParser(lexer);
+  var program = parseProgram(parser);
+
+  if program["type"] != expected["type"] {
+    println("parser test failed: expected=", expected["type"], ", got=", program["type"]);
+    return;
+  }
+
+  if len(program["statements"]) != len(expected["statements"]) {
+    println("parser test failed: expected=", len(expected["statements"]), ", got=", len(program["statements"]));
+    return;
+  }
+
+  var i = 0;
+  while i < len(expected["statements"]) {
+    var stmt = program["statements"][i];
+    var expectedStmt = expected["statements"][i];
+    if stmt["type"] != expectedStmt["type"] {
+      println("parser test failed: expected=", expectedStmt["type"], ", got=", stmt["type"]);
+      return;
+    }
+    if stmt["expression"]["type"] != expectedStmt["expression"]["type"] {
+      println("parser test failed: expected=", expectedStmt["expression"]["type"], ", got=", stmt["expression"]["type"]);
+      return;
+    }
+    if stmt["expression"]["value"] != expectedStmt["expression"]["value"] {
+      println("parser test failed: expected=", expectedStmt["expression"]["value"], ", got=", stmt["expression"]["value"]);
+      return;
+    }
+    i = i + 1;
+  }
+}
+testParser();
+
+fun eval(node) {
+  if node["type"] == "Program" {
+    return evalStatements(node["statements"]);
+  } else if node["type"] == "ExpressionStatement"{
+    return;
+  } else if node["type"] == "IntegerLiteral" {
+    return node["value"];
+  }
+  return;
+}
+
+fun evalStatements(statements) {
+  var result = 0;
+  var i = 0;
+  while i < len(statements) {
+    result = evalExpression(statements[i]["expression"]);
+    i = i + 1;
+  }
+  return result;
+}
+
+fun evalExpression(expression) {
+  if expression["type"] == "IntegerLiteral" {
+    return expression["value"];
+  }
+  if expression["type"] == "PrefixExpression" {
+    var right = evalExpression(expression["right"]);
+    if expression["operator"] == "-" {
+      return -right;
+    }
   }
 }
 
-testLexer();
+fun testEval() {
+  var input = "123;";
+  var expected = 123;
+
+  var lexer = newLexer(input);
+  var parser = newParser(lexer);
+  var program = parseProgram(parser);
+  var evaluated = eval(program);
+
+  if evaluated != expected {
+    println("test failed: expected=", expected, ", got=", evaluated);
+    return;
+  }
+}
+testEval();
+
+var input = readFile(args()[2]);
+var lexer = newLexer(input);
+var parser = newParser(lexer);
+var program = parseProgram(parser);
+var evaluated = eval(program);
+
+println(evaluated);

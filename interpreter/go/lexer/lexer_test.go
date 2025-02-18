@@ -36,6 +36,7 @@ while true {
 true && true || true;
 // comment
 1; // comment
+null;
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -167,6 +168,8 @@ true && true || true;
 		{token.TRUE, "true"},
 		{token.SEMICOLON, ";"},
 		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+		{token.NULL, "null"},
 		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}

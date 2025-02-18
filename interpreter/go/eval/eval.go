@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"kaze/ast"
 	"kaze/object"
+	"reflect"
 )
 
 var (
 	TRUE     = &object.Boolean{Value: true}
 	FALSE    = &object.Boolean{Value: false}
 	NULL     = &object.Null{}
+	NAN      = &object.NaN{}
 	BREAK    = &object.Break{}
 	CONTINUE = &object.Continue{}
 )
@@ -30,6 +32,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 		env.Create(node.Name.Value, value)
 	case *ast.ReturnStatement:
+		if node.ReturnValue == nil {
+			return &object.ReturnValue{Value: NULL}
+		}
 		val := Eval(node.ReturnValue, env)
 		if isError(val) {
 			return val
@@ -121,13 +126,15 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
 	case *ast.StringLiteral:
-		return &object.String{Value: node.Value}
+		return newString(node.Value)
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.HashLiteral:
 		return evalHashLiteral(node, env)
 	case *ast.ArrayLiteral:
 		return evalArrayLiteral(node, env)
+	case *ast.NullLiteral:
+		return NULL
 	}
 
 	return nil
@@ -228,7 +235,7 @@ func evalStringIndexExpression(stringObj object.Object, indexObj object.Object) 
 		return newError("index out of range: %d", index)
 	}
 
-	return &object.String{Value: string(str[index])}
+	return newString(string(str[index]))
 }
 
 func evalWhileStatement(node *ast.WhileStatement, env *object.Environment) object.Object {
@@ -320,9 +327,9 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
 		return evalStringInfixExpression(operator, left, right)
 	case operator == "==":
-		return nativeBoolToBooleanObject(left == right)
+		return nativeBoolToBooleanObject(reflect.DeepEqual(left, right))
 	case operator == "!=":
-		return nativeBoolToBooleanObject(left != right)
+		return nativeBoolToBooleanObject(!reflect.DeepEqual(left, right))
 	case operator == "&&":
 		return nativeBoolToBooleanObject(isTruthy(left) && isTruthy(right))
 	case operator == "||":
@@ -340,7 +347,7 @@ func evalStringInfixExpression(operator string, left object.Object, right object
 
 	switch operator {
 	case "+":
-		return &object.String{Value: leftVal + rightVal}
+		return newString(leftVal + rightVal)
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case ">":
@@ -359,6 +366,10 @@ func evalStringInfixExpression(operator string, left object.Object, right object
 }
 
 func evalIntegerInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	if left == NAN || right == NAN {
+		return NAN
+	}
+
 	leftVal := left.(*object.Integer).Value
 	rightVal := right.(*object.Integer).Value
 
@@ -463,4 +474,8 @@ func isTruthy(obj object.Object) bool {
 	default:
 		return true
 	}
+}
+
+func newString(value string) *object.String {
+	return &object.String{Value: value}
 }

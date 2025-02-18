@@ -15,8 +15,8 @@ const (
 	_ int = iota
 	LOWEST
 	ASSIGN      // =
-	EQUALS      // ==
 	ANDOR       // && or ||
+	EQUALS      // ==
 	LESSGREATER // > or <
 	SUM         // +
 	PRODUCT     // *
@@ -68,6 +68,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.HASH, p.parseHashLiteral)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
+	p.registerPrefix(token.NULL, p.parseNullLiteral)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -211,6 +212,9 @@ func (p *Parser) parseVarStatement() *ast.VarStatement {
 func (p *Parser) parseReturnStatement() ast.Statement {
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 	p.nextToken()
+	if p.curTokenIs(token.SEMICOLON) {
+		return stmt
+	}
 	stmt.ReturnValue = p.parseExpression(LOWEST)
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
@@ -446,6 +450,31 @@ func (p *Parser) parseEnclosedExpressions(end token.TokenType) []ast.Expression 
 	return exps
 }
 
+func (p *Parser) parseEnclosedExpressionsTrailingComma(end token.TokenType) []ast.Expression {
+	var exps []ast.Expression
+
+	if p.curTokenIs(end) {
+		return exps
+	}
+
+	exps = append(exps, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		if p.peekTokenIs(end) {
+			break
+		}
+		p.nextToken()
+		exps = append(exps, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(end) {
+		return nil
+	}
+
+	return exps
+}
+
 func (p *Parser) parseIfExpression() ast.Expression {
 	exp := &ast.IfExpression{Token: p.curToken}
 
@@ -522,6 +551,10 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 func (p *Parser) parseArrayLiteral() ast.Expression {
 	array := &ast.ArrayLiteral{Token: p.curToken}
 	p.nextToken()
-	array.Elements = p.parseEnclosedExpressions(token.RBRACKET)
+	array.Elements = p.parseEnclosedExpressionsTrailingComma(token.RBRACKET)
 	return array
+}
+
+func (p *Parser) parseNullLiteral() ast.Expression {
+	return &ast.NullLiteral{Token: p.curToken}
 }

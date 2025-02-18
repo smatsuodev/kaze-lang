@@ -54,6 +54,14 @@ func (n *Null) String() string {
 	return n.Inspect()
 }
 
+type NaN struct{}
+
+func (n *NaN) Type() ObjectType { return INTEGER_OBJ }
+func (n *NaN) Inspect() string  { return "NaN" }
+func (n *NaN) String() string {
+	return n.Inspect()
+}
+
 type Hashable interface {
 	HashKey() HashKey
 }
@@ -179,7 +187,20 @@ func (h *Hash) Inspect() string {
 	return "#{ " + strings.Join(pairs, ", ") + " }"
 }
 func (h *Hash) String() string {
-	return h.Inspect()[1:]
+	pairs := make([]string, 0)
+	for _, pair := range h.Pairs {
+		key, ok := pair.Key.(Printable)
+		if !ok {
+			key = &String{Value: "`not printable`"}
+		}
+		value, ok := pair.Value.(Printable)
+		if !ok {
+			value = &String{Value: "`not printable`"}
+		}
+		pairs = append(pairs, key.String()+": "+value.String())
+	}
+
+	return "{ " + strings.Join(pairs, ", ") + " }"
 }
 
 type Array struct {
@@ -196,7 +217,16 @@ func (a *Array) Inspect() string {
 	return "[ " + strings.Join(elements, ", ") + " ]"
 }
 func (a *Array) String() string {
-	return a.Inspect()
+	elements := make([]string, 0)
+	for _, el := range a.Elements {
+		if el, ok := el.(Printable); ok {
+			elements = append(elements, el.String())
+		} else {
+			elements = append(elements, "`not printable`")
+		}
+	}
+
+	return "[ " + strings.Join(elements, ", ") + " ]"
 }
 
 type LValue interface {

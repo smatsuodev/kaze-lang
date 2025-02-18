@@ -53,6 +53,7 @@ const (
 	WHILE    = "WHILE"
 	BREAK    = "BREAK"
 	CONTINUE = "CONTINUE"
+	NULL     = "NULL"
 )
 
 var keywords = map[string]TokenType{
@@ -66,6 +67,7 @@ var keywords = map[string]TokenType{
 	"while":    WHILE,
 	"break":    BREAK,
 	"continue": CONTINUE,
+	"null":     NULL,
 }
 
 func LookupIdent(ident string) TokenType {
