@@ -29,6 +29,14 @@ func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
 	l.skipWhitespace()
+
+	for l.ch == '/' && l.peekChar() == '/' {
+		for l.ch != '\n' && l.ch != 0 {
+			l.readChar()
+		}
+		l.skipWhitespace()
+	}
+
 	switch l.ch {
 	case '=':
 		if l.peekChar() == '=' {
