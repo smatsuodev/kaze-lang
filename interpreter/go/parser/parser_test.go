@@ -219,6 +219,8 @@ func TestInfixExpressions(t *testing.T) {
 		{"true != false;", true, "!=", false},
 		{"false == false;", false, "==", false},
 		{"false != true;", false, "!=", true},
+		{"true && true;", true, "&&", true},
+		{"true || false;", true, "||", false},
 		{`"hoge" + "fuga";`, "hoge", "+", "fuga"},
 		{`"hoge" == "hoge";`, "hoge", "==", "hoge"},
 		{`"hoge" != "fuga";`, "hoge", "!=", "fuga"},

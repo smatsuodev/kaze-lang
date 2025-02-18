@@ -33,6 +33,7 @@ while true {
 "hoge"[0];
 #{"foo": "bar"};
 [1,2,3][0];
+true && true || true;
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -156,6 +157,12 @@ while true {
 		{token.LBRACKET, "["},
 		{token.INT, "0"},
 		{token.RBRACKET, "]"},
+		{token.SEMICOLON, ";"},
+		{token.TRUE, "true"},
+		{token.AND, "&&"},
+		{token.TRUE, "true"},
+		{token.OR, "||"},
+		{token.TRUE, "true"},
 		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}
